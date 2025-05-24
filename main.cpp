@@ -9,8 +9,12 @@
 #include <string>   
 #include <limits>   
 #include <fstream>
+#include <cstdio>
 
-const std::string NAMA_FILE_DATA = "karyawan_data.csv"; // Definisikan nama file global
+const std::string NAMA_FILE_KARYAWAN = "karyawan_data.csv";
+const std::string NAMA_FILE_PENGGUNA_UTAMA = "pengguna_data.csv";
+const std::string NAMA_FILE_PENGGUNA_TES = "pengguna_tes_data.csv"; // File khusus untuk tes
+
 
 // --- Deklarasi Variabel Global ---
 std::string usernameSaatIni = ""; // Status login pengguna saat ini
@@ -145,20 +149,38 @@ void tesFiturUndo() {
 
 void tesManajemenPengguna() {
     std::cout << "\n--- Menjalankan Tes Manajemen Pengguna & Hashing ---" << std::endl;
-    ManajemenPengguna mp;
-    assert(mp.registrasiPenggunaBaru("admin", "pass123") == true);
-    std::cout << "Test 1.1 (Registrasi admin): Lolos" << std::endl;
-    assert(mp.registrasiPenggunaBaru("admin", "adminpass") == false); 
-    std::cout << "Test 1.2 (Registrasi duplikat username admin): Lolos" << std::endl;
-    assert(mp.loginPengguna("admin", "pass123") == true);
-    std::cout << "Test 2.1 (Login admin - berhasil): Lolos" << std::endl;
-    assert(mp.loginPengguna("admin", "salah") == false);
-    std::cout << "Test 2.2 (Login admin - password salah): Lolos" << std::endl;
-    assert(mp.loginPengguna("userX", "pass") == false); 
-    std::cout << "Test 2.3 (Login username tidak ada): Lolos" << std::endl;
-    mp.tampilkanSemuaPenggunaDebug();
+    
+    // Hapus file tes sebelumnya agar tes selalu bersih
+    std::remove(NAMA_FILE_PENGGUNA_TES.c_str()); 
+
+    ManajemenPengguna mpTes(NAMA_FILE_PENGGUNA_TES); // Gunakan file tes
+
+    // Test 1: Registrasi pengguna baru
+    assert(mpTes.registrasiPenggunaBaru("admin_tes", "pass123") == true);
+    std::cout << "Test 1.1 (Registrasi admin_tes): Lolos" << std::endl;
+    
+    // Test 2: Registrasi pengguna dengan username yang sama (harus gagal)
+    assert(mpTes.registrasiPenggunaBaru("admin_tes", "adminpass") == false);
+    std::cout << "Test 2.1 (Registrasi duplikat username admin_tes): Lolos" << std::endl;
+
+    // Test 3: Login berhasil
+    assert(mpTes.loginPengguna("admin_tes", "pass123") == true);
+    std::cout << "Test 3.1 (Login admin_tes - berhasil): Lolos" << std::endl;
+
+    // Test 4: Login gagal - password salah
+    assert(mpTes.loginPengguna("admin_tes", "salahpass") == false);
+    std::cout << "Test 4.1 (Login admin_tes - password salah): Lolos" << std::endl;
+
+    // Test 5: Login gagal - username tidak ada
+    assert(mpTes.loginPengguna("penggunabaru_tes", "pass") == false);
+    std::cout << "Test 5.1 (Login username tidak ada): Lolos" << std::endl;
+    
+    mpTes.tampilkanSemuaPenggunaDebug(); 
+    // Destructor mpTes akan dipanggil saat keluar scope, menyimpan ke NAMA_FILE_PENGGUNA_TES
+
     std::cout << "--- Tes Manajemen Pengguna & Hashing Selesai ---" << std::endl;
 }
+
 
 // --- Fungsi UI ---
 void tampilkanMenuAplikasi() {
@@ -226,69 +248,67 @@ void tesOperasiFile() {
     std::cout << "--- Tes Operasi File Selesai ---" << std::endl;
 }
 
-
 int main() {
+    ManajemenPengguna manajerPenggunaUtama(NAMA_FILE_PENGGUNA_UTAMA);
+
+    // Jalankan tes
     tesStructKaryawan();    
     tesLinkedListKaryawan(); 
     tesFiturUndo();         
-    tesManajemenPengguna();
+    tesManajemenPengguna(); // Tes ini sekarang lebih terisolasi
 
     std::cout << "\n===== Memulai Aplikasi Interaktif Pengelolaan Data Karyawan =====" << std::endl;
-    
+
     LinkedListKaryawan daftarKaryawanUtama;
     StackAksi stackUndoUtama; 
-    ManajemenPengguna manajerPenggunaUtama;
+    // ManajemenPengguna manajerPenggunaUtama; // Sudah dibuat di atas
 
-    manajerPenggunaUtama.registrasiPenggunaBaru("tes", "tes123"); // Pengguna default
-
-    // Muat data karyawan dari file saat aplikasi dimulai
-    if (!daftarKaryawanUtama.muatDariFile(NAMA_FILE_DATA)) { // NAMA_FILE_DATA harus didefinisikan global
-        std::cout << "Memulai dengan daftar karyawan kosong karena file data tidak ditemukan atau gagal dimuat." << std::endl;
+    if (!daftarKaryawanUtama.muatDariFile(NAMA_FILE_KARYAWAN)) {
+        std::cout << "Memulai dengan daftar karyawan kosong karena file '" << NAMA_FILE_KARYAWAN << "' tidak ditemukan atau gagal dimuat." << std::endl;
     }
 
-    int pilihan = -1; // Inisialisasi pilihan
-    Karyawan kTemp; 
+    int pilihan = -1; 
+    // Karyawan kTemp; // Pindahkan deklarasi kTemp ke dalam case 1 agar selalu baru
     std::string inputString1, inputString2; 
 
     do {
         tampilkanMenuAplikasi();
         
-        // Baca input pilihan
-        if (!(std::cin >> pilihan)) { // Cek apakah input valid (berupa angka)
+        if (!(std::cin >> pilihan)) { 
             std::cout << "Input tidak valid. Hanya angka yang diizinkan untuk pilihan menu." << std::endl;
-            std::cin.clear(); // Bersihkan error flags
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Buang sisa input salah
-            pilihan = -99; // Set ke nilai yang tidak akan masuk ke case mana pun kecuali default
-            continue; // Ulangi loop untuk meminta input lagi
+            std::cin.clear(); 
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+            pilihan = -99; 
+            continue; 
         }
-        // Jika input angka valid, buang sisa newline dari buffer
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
 
-        if (usernameSaatIni.empty()) { // Jika BELUM LOGIN
-            switch (pilihan) {
-                case 10: { // Registrasi
+        if (usernameSaatIni.empty()) { 
+            // ... (logika menu login/registrasi tetap sama)
+             switch (pilihan) {
+                case 10: { 
                     std::cout << "--- Registrasi Pengguna Baru ---" << std::endl;
                     std::cout << "Masukkan Username baru: "; 
-                    std::getline(std::cin, inputString1); // Baca username
+                    std::getline(std::cin, inputString1);
                     std::cout << "Masukkan Password baru: "; 
-                    std::getline(std::cin, inputString2); // Baca password
+                    std::getline(std::cin, inputString2); 
                     manajerPenggunaUtama.registrasiPenggunaBaru(inputString1, inputString2);
                     break;
                 }
-                case 11: { // Login
+                case 11: { 
                     std::cout << "--- Login Pengguna ---" << std::endl;
                     std::cout << "Username: "; 
-                    std::getline(std::cin, inputString1); // Baca username
+                    std::getline(std::cin, inputString1); 
                     std::cout << "Password: "; 
-                    std::getline(std::cin, inputString2); // Baca password
+                    std::getline(std::cin, inputString2); 
                     if (manajerPenggunaUtama.loginPengguna(inputString1, inputString2)) {
                         usernameSaatIni = inputString1;
                     }
                     break;
                 }
                 case 0:
-                    // Simpan data sebelum keluar
-                    if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_DATA)) {
+                    // Simpan data sebelum keluar (data pengguna disimpan oleh destructor ManajemenPengguna)
+                    if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_KARYAWAN)) {
                          std::cerr << "Peringatan: Gagal menyimpan data karyawan ke file!" << std::endl;
                     }
                     std::cout << "Keluar dari aplikasi." << std::endl;
@@ -298,33 +318,41 @@ int main() {
             }
         } else { // Jika SUDAH LOGIN
             switch (pilihan) {
-                case 1: { // Tambah Karyawan
+                case 1: { 
+                    Karyawan kBaru; // <-- Deklarasikan objek Karyawan baru di sini
                     std::cout << "--- Tambah Karyawan (Login sebagai: " << usernameSaatIni << ") ---" << std::endl;
-                    std::cout << "Masukkan ID Karyawan: "; std::getline(std::cin, kTemp.idKaryawan);
-                    std::cout << "Masukkan Nama Karyawan: "; std::getline(std::cin, kTemp.namaKaryawan);
-                    std::cout << "Masukkan Jabatan: "; std::getline(std::cin, kTemp.jabatan);
+                    std::cout << "Masukkan ID Karyawan: "; 
+                    std::getline(std::cin, kBaru.idKaryawan); // Gunakan kBaru
+                    std::cout << "Masukkan Nama Karyawan: "; 
+                    std::getline(std::cin, kBaru.namaKaryawan); // Gunakan kBaru
+                    std::cout << "Masukkan Jabatan: "; 
+                    std::getline(std::cin, kBaru.jabatan); // Gunakan kBaru
                     std::cout << "Masukkan Gaji: "; 
-                    while(!(std::cin >> kTemp.gaji)){ 
+                    while(!(std::cin >> kBaru.gaji)){ // Gunakan kBaru
                         std::cout << "Input gaji tidak valid (harus angka). Masukkan Gaji: "; 
                         std::cin.clear(); 
                         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     }
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-                    daftarKaryawanUtama.tambahDiAkhir(kTemp, stackUndoUtama);
+                    daftarKaryawanUtama.tambahDiAkhir(kBaru, stackUndoUtama); // Gunakan kBaru
                     break;
                 }
+                // ... (case 2 sampai 9 dan 12 tetap sama persis seperti sebelumnya)
                 case 2: 
                     daftarKaryawanUtama.tampilkanSemua();
                     break;
                 case 3: { 
+                    Karyawan kUpdate; // <-- Deklarasikan objek Karyawan baru di sini untuk update
                     std::cout << "--- Update Data Karyawan (Login sebagai: " << usernameSaatIni << ") ---" << std::endl;
-                    std::cout << "Masukkan ID Karyawan yang akan diupdate: "; std::getline(std::cin, inputString1);
+                    std::cout << "Masukkan ID Karyawan yang akan diupdate: "; 
+                    std::getline(std::cin, inputString1); // Simpan ID ke inputString1
                     NodeLL* nodeAda = daftarKaryawanUtama.cariKaryawanById(inputString1);
                     if (nodeAda != nullptr) {
-                        Karyawan kUpdate; 
-                        kUpdate.idKaryawan = inputString1; 
-                        std::cout << "Masukkan Nama Baru (ID: " << inputString1 << "): "; std::getline(std::cin, kUpdate.namaKaryawan);
-                        std::cout << "Masukkan Jabatan Baru: "; std::getline(std::cin, kUpdate.jabatan);
+                        kUpdate.idKaryawan = inputString1; // Set ID pada objek kUpdate
+                        std::cout << "Masukkan Nama Baru (ID: " << inputString1 << "): "; 
+                        std::getline(std::cin, kUpdate.namaKaryawan);
+                        std::cout << "Masukkan Jabatan Baru: "; 
+                        std::getline(std::cin, kUpdate.jabatan);
                         std::cout << "Masukkan Gaji Baru: "; 
                         while(!(std::cin >> kUpdate.gaji)){
                             std::cout << "Input gaji tidak valid (harus angka). Masukkan Gaji Baru: "; 
@@ -340,7 +368,8 @@ int main() {
                 }
                 case 4: { 
                     std::cout << "--- Hapus Karyawan (Login sebagai: " << usernameSaatIni << ") ---" << std::endl;
-                    std::cout << "Masukkan ID Karyawan yang akan dihapus: "; std::getline(std::cin, inputString1);
+                    std::cout << "Masukkan ID Karyawan yang akan dihapus: "; 
+                    std::getline(std::cin, inputString1); // Simpan ID ke inputString1
                     daftarKaryawanUtama.hapusKaryawanById(inputString1, stackUndoUtama);
                     break;
                 }
@@ -356,9 +385,8 @@ int main() {
                     usernameSaatIni = ""; 
                     break;
                 case 0:
-                    // Simpan data sebelum keluar
-                    if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_DATA)) {
-                         std::cerr << "Peringatan: Gagal menyimpan data karyawan ke file!" << std::endl;
+                    if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_KARYAWAN)) {
+                         std::cerr << "Peringatan: Gagal menyimpan data karyawan!" << std::endl;
                     }
                     std::cout << "Keluar dari aplikasi." << std::endl;
                     break;

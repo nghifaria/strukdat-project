@@ -9,18 +9,22 @@
 class ManajemenPengguna {
 private:
     std::vector<Pengguna> daftarPengguna;
+    std::string namaFilePenggunaInternal; // Nama file yang digunakan oleh instance ini
 
-    // Fungsi hash sederhana (implementasi mandiri)
     static unsigned long hashPasswordSederhana(const std::string& password);
-    Pengguna* cariPenggunaInternal(const std::string& username); // Helper
+    Pengguna* cariPenggunaInternal(const std::string& username);
+
+    void muatPenggunaDariFile(); 
+    void simpanSemuaPenggunaKeFile() const;
 
 public:
-    ManajemenPengguna();
-    // ~ManajemenPengguna(); // Tidak perlu jika hanya vector standar
+    ManajemenPengguna(const std::string& namaFile = "pengguna_data.csv"); // Constructor dengan nama file default
+    ~ManajemenPengguna(); 
 
     bool registrasiPenggunaBaru(const std::string& username, const std::string& password);
     bool loginPengguna(const std::string& username, const std::string& password);
-    void tampilkanSemuaPenggunaDebug() const; // Untuk debugging
+    void tampilkanSemuaPenggunaDebug() const;
+    void setNamaFile(const std::string& namaFile); // Untuk mengubah nama file jika perlu (jarang dipakai)
 };
 
 #endif // MANAJEMEN_PENGGUNA_H
