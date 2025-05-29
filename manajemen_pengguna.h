@@ -5,8 +5,6 @@
 #include "pengguna.h"
 #include <string>
 #include <vector>
-#include <fstream> 
-#include <sstream> 
 
 class ManajemenPengguna {
 private:
@@ -26,7 +24,6 @@ public:
     bool registrasiPenggunaBaru(const std::string& username, const std::string& password);
     bool loginPengguna(const std::string& username, const std::string& password);
     void tampilkanSemuaPenggunaDebug() const;
-    void setNamaFile(const std::string& namaFile);
 };
 
 #endif // MANAJEMEN_PENGGUNA_H

@@ -1,6 +1,9 @@
 // manajemen_pengguna.cpp
 #include "manajemen_pengguna.h"
 #include <iostream>
+#include <fstream>  
+#include <sstream>  
+#include <stdexcept>
 
 ManajemenPengguna::ManajemenPengguna(const std::string& namaFile) : namaFilePenggunaInternal(namaFile) {
     muatPenggunaDariFile(); 
@@ -8,10 +11,6 @@ ManajemenPengguna::ManajemenPengguna(const std::string& namaFile) : namaFilePeng
 
 ManajemenPengguna::~ManajemenPengguna() {
     simpanSemuaPenggunaKeFile(); 
-}
-
-void ManajemenPengguna::setNamaFile(const std::string& namaFile) {
-    namaFilePenggunaInternal = namaFile;
 }
 
 unsigned long ManajemenPengguna::hashPasswordSederhana(const std::string& password) {
@@ -34,7 +33,7 @@ Pengguna* ManajemenPengguna::cariPenggunaInternal(const std::string& username) {
 void ManajemenPengguna::muatPenggunaDariFile() {
     std::ifstream file(namaFilePenggunaInternal); 
     if (!file.is_open()) {
-        std::cout << "Info: File data pengguna '" << namaFilePenggunaInternal << "' tidak ditemukan. Memulai dengan daftar pengguna kosong." << std::endl;
+        std::cout << "Info: File data pengguna '" << namaFilePenggunaInternal << "' tidak ditemukan. Membuat file baru atau memulai dengan daftar pengguna kosong." << std::endl;
         return;
     }
     daftarPengguna.clear(); 
@@ -43,20 +42,26 @@ void ManajemenPengguna::muatPenggunaDariFile() {
         std::stringstream ss(baris);
         std::string username;
         std::string hashedPasswordStr;
-        unsigned long hashedPassword;
+        unsigned long hashedPasswordVal; 
         if (std::getline(ss, username, ',') && std::getline(ss, hashedPasswordStr)) {
             try {
-                hashedPassword = std::stoul(hashedPasswordStr);
-                daftarPengguna.push_back({username, hashedPassword});
-            } catch (const std::exception& e) { 
-                std::cerr << "Peringatan: Error konversi hashed password di file pengguna untuk user: " << username << " - " << e.what() << std::endl;
+                hashedPasswordVal = std::stoul(hashedPasswordStr); 
+                daftarPengguna.push_back({username, hashedPasswordVal});
+            } catch (const std::invalid_argument& ia) {
+                std::cerr << "Peringatan: Format hashed password tidak valid di file pengguna untuk user: " << username << " Baris: " << baris << " Detail: " << ia.what() << std::endl;
+            } catch (const std::out_of_range& oor) {
+                std::cerr << "Peringatan: Nilai hashed password di luar jangkauan untuk user: " << username << " Baris: " << baris << " Detail: " << oor.what() << std::endl;
             }
         } else {
-             std::cerr << "Peringatan: Baris tidak valid di file pengguna: " << baris << std::endl;
+             if (!baris.empty()) { 
+                std::cerr << "Peringatan: Baris tidak valid di file pengguna: " << baris << std::endl;
+             }
         }
     }
     file.close();
-    std::cout << "Info: Data pengguna berhasil dimuat dari '" << namaFilePenggunaInternal << "'." << std::endl;
+    if (!daftarPengguna.empty()){ 
+        std::cout << "Info: Data pengguna berhasil dimuat dari '" << namaFilePenggunaInternal << "'." << std::endl;
+    }
 }
 
 void ManajemenPengguna::simpanSemuaPenggunaKeFile() const {

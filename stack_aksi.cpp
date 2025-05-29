@@ -1,6 +1,7 @@
 // stack_aksi.cpp
 #include "stack_aksi.h"
 #include <stdexcept> 
+#include <iostream>
 
 StackAksi::StackAksi() : top(nullptr), count(0) {}
 
@@ -29,6 +30,7 @@ void StackAksi::push(const AksiUndo& aksi) {
 
 AksiUndo StackAksi::pop() {
     if (isEmpty()) {
+        std::cerr << "Error fatal: Mencoba pop dari stack kosong." << std::endl;
         throw std::runtime_error("Error: Stack kosong, tidak bisa pop.");
     }
     NodeStack* temp = top;
@@ -41,6 +43,7 @@ AksiUndo StackAksi::pop() {
 
 AksiUndo StackAksi::peek() const {
     if (isEmpty()) {
+        std::cerr << "Error fatal: Mencoba peek dari stack kosong." << std::endl;
         throw std::runtime_error("Error: Stack kosong, tidak bisa peek.");
     }
     return top->dataAksi;
