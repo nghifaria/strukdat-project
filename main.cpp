@@ -147,6 +147,7 @@ void tampilkanSubMenuAdmin() {
     std::cout << "\n--- Sub Menu: Admin ---" << std::endl;
     std::cout << "1. Tampilkan Semua Pengguna (Debug)" << std::endl;
     std::cout << "2. Registrasi Pengguna Baru (Admin/User)" << std::endl;
+    std::cout << "3. Hapus Pengguna (User)" << std::endl; // <-- DITAMBAHKAN
     std::cout << "0. Kembali ke Menu Utama" << std::endl;
     std::cout << "-----------------------------------------------" << std::endl;
 }
@@ -221,7 +222,7 @@ void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
                     case 0: std::cout << "Keluar dari aplikasi..." << std::endl; break;
                     default: std::cout << "Pilihan tidak valid." << std::endl;
                 }
-            } else { // Peran PENGGUNA
+            } else { 
                  switch (pilihanUtama) {
                     case 1: prosesMenuCRUD(daftarKaryawan, stackUndo, manajerPengguna); break;
                     case 2: prosesMenuTampilkanDanUrutkan(daftarKaryawan); break;
@@ -379,13 +380,19 @@ void prosesMenuFilterDanCari(LinkedListKaryawan& daftarKaryawan) {
 
 void prosesMenuAdmin(ManajemenPengguna& manajerPengguna) {
     int pilihanAdmin = -1;
-    std::string usernameBaru, passwordBaru;
+    std::string usernameBaru, passwordBaru, usernameTarget;
     int pilihanPeranInt;
     TipePeran peranBaru;
+    Pengguna* adminSaatIni = manajerPengguna.getPenggunaSaatIni();
+
+    if (!adminSaatIni || adminSaatIni->peran != TipePeran::ADMIN) {
+        std::cout << "Akses ditolak. Hanya admin yang dapat mengakses menu ini." << std::endl;
+        return;
+    }
 
     do {
         tampilkanSubMenuAdmin();
-        pilihanAdmin = getInputPilihan("Masukkan pilihan Admin: ", 0, 2);
+        pilihanAdmin = getInputPilihan("Masukkan pilihan Admin: ", 0, 3);
         switch (pilihanAdmin) {
             case 1:
                 manajerPengguna.tampilkanSemuaPenggunaDebug();
@@ -397,6 +404,11 @@ void prosesMenuAdmin(ManajemenPengguna& manajerPengguna) {
                 pilihanPeranInt = getInputPilihan("Pilih Peran (0 untuk User, 1 untuk Admin): ", 0, 1);
                 peranBaru = (pilihanPeranInt == 1) ? TipePeran::ADMIN : TipePeran::PENGGUNA;
                 manajerPengguna.registrasiPenggunaBaru(usernameBaru, passwordBaru, peranBaru);
+                break;
+            case 3:
+                std::cout << "--- Hapus Pengguna (User) ---" << std::endl;
+                getInputString("Masukkan username pengguna yang akan dihapus: ", usernameTarget);
+                manajerPengguna.hapusPengguna(adminSaatIni->username, usernameTarget);
                 break;
             case 0:
                 std::cout << "Kembali ke Menu Utama..." << std::endl;

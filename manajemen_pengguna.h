@@ -10,7 +10,7 @@ class ManajemenPengguna {
 private:
     std::vector<Pengguna> daftarPengguna;
     std::string namaFilePenggunaInternal;
-    Pengguna* penggunaSaatIniInternal; 
+    Pengguna* penggunaSaatIniInternal;
 
     static unsigned long hashPasswordSederhana(const std::string& password);
     Pengguna* cariPenggunaInternal(const std::string& username);
@@ -29,6 +29,7 @@ public:
     bool loginPengguna(const std::string& username, const std::string& password);
     void logoutPengguna();
     Pengguna* getPenggunaSaatIni() const;
+    bool hapusPengguna(const std::string& usernameAdmin, const std::string& usernameTarget); // <-- DITAMBAHKAN
     void tampilkanSemuaPenggunaDebug() const;
 };
 

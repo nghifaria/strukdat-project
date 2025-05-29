@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <algorithm> // Untuk std::transform
+#include <algorithm> // Untuk std::transform dan std::remove_if
 
 ManajemenPengguna::ManajemenPengguna(const std::string& namaFile) : namaFilePenggunaInternal(namaFile), penggunaSaatIniInternal(nullptr) {
     muatPenggunaDariFile();
@@ -51,7 +51,7 @@ std::string ManajemenPengguna::tipePeranToString(TipePeran peran) const {
         case TipePeran::PENGGUNA:
             return "PENGGUNA";
         default:
-            return "PENGGUNA"; 
+            return "PENGGUNA";
     }
 }
 
@@ -115,7 +115,7 @@ bool ManajemenPengguna::registrasiPenggunaBaru(const std::string& username, cons
         std::cout << "Error: Username '" << username << "' sudah terdaftar." << std::endl;
         return false;
     }
-    
+
     daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(password), peran);
     std::cout << "Info: Pengguna '" << username << "' dengan peran '" << tipePeranToString(peran) << "' berhasil diregistrasi." << std::endl;
     return true;
@@ -152,14 +152,46 @@ Pengguna* ManajemenPengguna::getPenggunaSaatIni() const {
     return penggunaSaatIniInternal;
 }
 
+bool ManajemenPengguna::hapusPengguna(const std::string& usernameAdmin, const std::string& usernameTarget) {
+    Pengguna* admin = cariPenggunaInternal(usernameAdmin);
+    if (!admin || admin->peran != TipePeran::ADMIN) {
+        std::cout << "Error: Hanya admin yang dapat menghapus pengguna." << std::endl;
+        return false;
+    }
+
+    if (usernameAdmin == usernameTarget) {
+        std::cout << "Error: Admin tidak dapat menghapus dirinya sendiri." << std::endl;
+        return false;
+    }
+
+    Pengguna* target = cariPenggunaInternal(usernameTarget);
+    if (!target) {
+        std::cout << "Error: Pengguna target '" << usernameTarget << "' tidak ditemukan." << std::endl;
+        return false;
+    }
+
+    if (target->peran == TipePeran::ADMIN) {
+        std::cout << "Error: Admin tidak dapat menghapus admin lain." << std::endl;
+        return false;
+    }
+
+    daftarPengguna.erase(
+        std::remove_if(daftarPengguna.begin(), daftarPengguna.end(),
+                       [&](const Pengguna& p) { return p.username == usernameTarget; }),
+        daftarPengguna.end());
+
+    std::cout << "Info: Pengguna '" << usernameTarget << "' berhasil dihapus oleh admin '" << usernameAdmin << "'." << std::endl;
+    return true;
+}
+
 void ManajemenPengguna::tampilkanSemuaPenggunaDebug() const {
     std::cout << "\n--- Daftar Pengguna (Debug dari file: " << namaFilePenggunaInternal << ") ---" << std::endl;
     if (daftarPengguna.empty()) {
         std::cout << "Tidak ada pengguna terdaftar." << std::endl;
     }
     for (const auto& p : daftarPengguna) {
-        std::cout << "Username: " << p.username 
-                  << ", HashedPassword: " << p.hashedPassword 
+        std::cout << "Username: " << p.username
+                  << ", HashedPassword: " << p.hashedPassword
                   << ", Peran: " << tipePeranToString(p.peran) << std::endl;
     }
     std::cout << "--------------------------------" << std::endl;
