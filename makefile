@@ -10,7 +10,8 @@ SRCS = main.cpp \
        linkedlist_karyawan.cpp \
        manajemen_pengguna.cpp \
        stack_aksi.cpp \
-       hierarki_jabatan.cpp
+       hierarki_jabatan.cpp \
+       queue_permintaan.cpp
 
 # File object hasil kompilasi
 OBJS = $(SRCS:.cpp=.o)

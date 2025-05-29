@@ -4,13 +4,13 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <algorithm> // Untuk std::transform dan std::remove_if
+#include <algorithm>
 
 ManajemenPengguna::ManajemenPengguna(const std::string& namaFile) : namaFilePenggunaInternal(namaFile), penggunaSaatIniInternal(nullptr) {
     muatPenggunaDariFile();
     if (daftarPengguna.empty()) {
         std::cout << "Info: Daftar pengguna kosong. Membuat akun admin default (admin/admin)..." << std::endl;
-        registrasiPenggunaBaru("admin", "admin", TipePeran::ADMIN);
+        registrasiPenggunaOlehAdmin("admin", "admin", TipePeran::ADMIN);
     }
 }
 
@@ -106,7 +106,7 @@ void ManajemenPengguna::simpanSemuaPenggunaKeFile() const {
     std::cout << "Info: Data pengguna berhasil disimpan ke '" << namaFilePenggunaInternal << "'." << std::endl;
 }
 
-bool ManajemenPengguna::registrasiPenggunaBaru(const std::string& username, const std::string& password, TipePeran peran) {
+bool ManajemenPengguna::registrasiPenggunaBaruStandar(const std::string& username, const std::string& password) {
     if (username.empty() || password.empty()) {
         std::cout << "Error: Username dan password tidak boleh kosong." << std::endl;
         return false;
@@ -115,11 +115,25 @@ bool ManajemenPengguna::registrasiPenggunaBaru(const std::string& username, cons
         std::cout << "Error: Username '" << username << "' sudah terdaftar." << std::endl;
         return false;
     }
-
-    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(password), peran);
-    std::cout << "Info: Pengguna '" << username << "' dengan peran '" << tipePeranToString(peran) << "' berhasil diregistrasi." << std::endl;
+    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(password), TipePeran::PENGGUNA);
+    std::cout << "Info: Pengguna '" << username << "' dengan peran 'PENGGUNA' berhasil diregistrasi." << std::endl;
     return true;
 }
+
+bool ManajemenPengguna::registrasiPenggunaOlehAdmin(const std::string& username, const std::string& password, TipePeran peran) {
+    if (username.empty() || password.empty()) {
+        std::cout << "Error: Username dan password tidak boleh kosong." << std::endl;
+        return false;
+    }
+    if (this->cariPenggunaInternal(username) != nullptr) {
+        std::cout << "Error: Username '" << username << "' sudah terdaftar." << std::endl;
+        return false;
+    }
+    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(password), peran);
+    std::cout << "Info: Pengguna '" << username << "' dengan peran '" << tipePeranToString(peran) << "' berhasil diregistrasi oleh admin." << std::endl;
+    return true;
+}
+
 
 bool ManajemenPengguna::loginPengguna(const std::string& username, const std::string& password) {
     Pengguna* pengguna = this->cariPenggunaInternal(username);
