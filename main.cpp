@@ -44,7 +44,7 @@ void tesLinkedListKaryawan() {
     std::cout << "Test 1 (Initial state): Lolos" << std::endl;
 
     Karyawan kar1_test = {"TL001", "Test Budi", "Test Staf", 5000000};
-    Karyawan kar2_test = {"TL002", "Test Citra", "Test SPV", 8000000};
+    Karyawan kar2_test = {"TL002", "Test Citra", "Test SPV",  };
     listSaya.tambahDiAkhir(kar1_test); 
     listSaya.tambahDiAkhir(kar2_test);
     assert(listSaya.getJumlahNode() == 2);
@@ -203,7 +203,11 @@ void tampilkanMenuAplikasi() {
         std::cout << "7. Tampilkan Karyawan Terurut berdasarkan Gaji (Asc)" << std::endl;
         std::cout << "8. Tampilkan Karyawan Terurut berdasarkan Gaji (Desc)" << std::endl;
         std::cout << "9. Undo Aksi Terakhir" << std::endl;
-        std::cout << "12. Logout" << std::endl;
+        std::cout << "12. Tampilkan Karyawan Berdasarkan Gaji" << std::endl;
+        std::cout << "13. Tampilkan Karyawan Berdasarkan Jabatan" << std::endl;
+        std::cout << "14. Cari Karyawan Berdasarkan Nama" << std::endl;
+        std::cout << "15. Logout" << std::endl;
+        
     }
     std::cout << "0. Keluar Aplikasi" << std::endl;
     std::cout << "==============================================" << std::endl;
@@ -248,6 +252,7 @@ void tesOperasiFile() {
     std::cout << "--- Tes Operasi File Selesai ---" << std::endl;
 }
 
+//  
 int main() {
     ManajemenPengguna manajerPenggunaUtama(NAMA_FILE_PENGGUNA_UTAMA);
 
@@ -261,14 +266,12 @@ int main() {
 
     LinkedListKaryawan daftarKaryawanUtama;
     StackAksi stackUndoUtama; 
-    // ManajemenPengguna manajerPenggunaUtama; // Sudah dibuat di atas
 
     if (!daftarKaryawanUtama.muatDariFile(NAMA_FILE_KARYAWAN)) {
         std::cout << "Memulai dengan daftar karyawan kosong karena file '" << NAMA_FILE_KARYAWAN << "' tidak ditemukan atau gagal dimuat." << std::endl;
     }
 
     int pilihan = -1; 
-    // Karyawan kTemp; // Pindahkan deklarasi kTemp ke dalam case 1 agar selalu baru
     std::string inputString1, inputString2; 
 
     do {
@@ -284,8 +287,7 @@ int main() {
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
 
         if (usernameSaatIni.empty()) { 
-            // ... (logika menu login/registrasi tetap sama)
-             switch (pilihan) {
+            switch (pilihan) {
                 case 10: { 
                     std::cout << "--- Registrasi Pengguna Baru ---" << std::endl;
                     std::cout << "Masukkan Username baru: "; 
@@ -337,7 +339,6 @@ int main() {
                     daftarKaryawanUtama.tambahDiAkhir(kBaru, stackUndoUtama); // Gunakan kBaru
                     break;
                 }
-                // ... (case 2 sampai 9 dan 12 tetap sama persis seperti sebelumnya)
                 case 2: 
                     daftarKaryawanUtama.tampilkanSemua();
                     break;
@@ -381,6 +382,31 @@ int main() {
                     prosesUndo(daftarKaryawanUtama, stackUndoUtama);
                     break;
                 case 12: 
+                    std::cout << "Masukkan batas gaji: ";
+                    double batasGaji;
+                    std::cin >> batasGaji;
+                    std::cout << "Tampilkan karyawan dengan gaji lebih besar dari " << batasGaji << "? (1: Ya, 0: Tidak): ";
+                    bool lebihBesar;
+                    std::cin >> lebihBesar;
+                    daftarKaryawanUtama.tampilkanKaryawanBerdasarkanGaji(batasGaji, lebihBesar);
+                    break;
+                case 13: {
+                    std::cout << "Masukkan jabatan: ";
+                    std::string jabatan;
+                    std::cin.ignore();
+                    std::getline(std::cin, jabatan);
+                    daftarKaryawanUtama.tampilkanKaryawanBerdasarkanJabatan(jabatan);
+                    break;
+                }
+                case 14: {
+                    std::cout << "Masukkan nama karyawan yang dicari: ";
+                    std::string nama;
+                    std::cin.ignore();
+                    std::getline(std::cin, nama);
+                    daftarKaryawanUtama.cariKaryawanBerdasarkanNama(nama);
+                    break;
+                }
+                case 15: // Logout
                     std::cout << "Pengguna '" << usernameSaatIni << "' berhasil logout." << std::endl;
                     usernameSaatIni = ""; 
                     break;
