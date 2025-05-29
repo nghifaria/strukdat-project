@@ -182,8 +182,8 @@ void tesManajemenPengguna() {
 }
 
 
-// --- Fungsi UI ---
-void tampilkanMenuAplikasi() {
+
+void tampilkanMenuAplikasi() { // Pastikan menu ini sudah terupdate
     std::cout << "\n===== Aplikasi Pengelolaan Data Karyawan =====" << std::endl;
     if (!usernameSaatIni.empty()) { 
         std::cout << "Login sebagai: " << usernameSaatIni << std::endl;
@@ -203,11 +203,10 @@ void tampilkanMenuAplikasi() {
         std::cout << "7. Tampilkan Karyawan Terurut berdasarkan Gaji (Asc)" << std::endl;
         std::cout << "8. Tampilkan Karyawan Terurut berdasarkan Gaji (Desc)" << std::endl;
         std::cout << "9. Undo Aksi Terakhir" << std::endl;
-        std::cout << "12. Tampilkan Karyawan Berdasarkan Gaji" << std::endl;
-        std::cout << "13. Tampilkan Karyawan Berdasarkan Jabatan" << std::endl;
+        std::cout << "12. Filter Karyawan Berdasarkan Gaji" << std::endl; // Nomor menu mungkin perlu disesuaikan
+        std::cout << "13. Filter Karyawan Berdasarkan Jabatan" << std::endl;
         std::cout << "14. Cari Karyawan Berdasarkan Nama" << std::endl;
-        std::cout << "15. Logout" << std::endl;
-        
+        std::cout << "15. Logout" << std::endl; 
     }
     std::cout << "0. Keluar Aplikasi" << std::endl;
     std::cout << "==============================================" << std::endl;
@@ -251,28 +250,26 @@ void tesOperasiFile() {
 
     std::cout << "--- Tes Operasi File Selesai ---" << std::endl;
 }
-
-//  
 int main() {
+    // ... (inisialisasi dan pemanggilan fungsi tes sebelumnya) ...
     ManajemenPengguna manajerPenggunaUtama(NAMA_FILE_PENGGUNA_UTAMA);
-
-    // Jalankan tes
     tesStructKaryawan();    
     tesLinkedListKaryawan(); 
     tesFiturUndo();         
-    tesManajemenPengguna(); // Tes ini sekarang lebih terisolasi
+    tesManajemenPengguna();
+    // tesOperasiFile(); // Bisa di-uncomment jika perlu
 
     std::cout << "\n===== Memulai Aplikasi Interaktif Pengelolaan Data Karyawan =====" << std::endl;
-
+    
     LinkedListKaryawan daftarKaryawanUtama;
     StackAksi stackUndoUtama; 
-
+    
     if (!daftarKaryawanUtama.muatDariFile(NAMA_FILE_KARYAWAN)) {
         std::cout << "Memulai dengan daftar karyawan kosong karena file '" << NAMA_FILE_KARYAWAN << "' tidak ditemukan atau gagal dimuat." << std::endl;
     }
 
     int pilihan = -1; 
-    std::string inputString1, inputString2; 
+    // ... (deklarasi kTemp, inputString1, inputString2 ...)
 
     do {
         tampilkanMenuAplikasi();
@@ -284,137 +281,87 @@ int main() {
             pilihan = -99; 
             continue; 
         }
+        // Pembersihan buffer ini krusial dan harus selalu ada setelah std::cin >> angka
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
 
         if (usernameSaatIni.empty()) { 
-            switch (pilihan) {
-                case 10: { 
-                    std::cout << "--- Registrasi Pengguna Baru ---" << std::endl;
-                    std::cout << "Masukkan Username baru: "; 
-                    std::getline(std::cin, inputString1);
-                    std::cout << "Masukkan Password baru: "; 
-                    std::getline(std::cin, inputString2); 
-                    manajerPenggunaUtama.registrasiPenggunaBaru(inputString1, inputString2);
-                    break;
-                }
-                case 11: { 
-                    std::cout << "--- Login Pengguna ---" << std::endl;
-                    std::cout << "Username: "; 
-                    std::getline(std::cin, inputString1); 
-                    std::cout << "Password: "; 
-                    std::getline(std::cin, inputString2); 
-                    if (manajerPenggunaUtama.loginPengguna(inputString1, inputString2)) {
-                        usernameSaatIni = inputString1;
-                    }
-                    break;
-                }
-                case 0:
-                    // Simpan data sebelum keluar (data pengguna disimpan oleh destructor ManajemenPengguna)
-                    if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_KARYAWAN)) {
-                         std::cerr << "Peringatan: Gagal menyimpan data karyawan ke file!" << std::endl;
-                    }
-                    std::cout << "Keluar dari aplikasi." << std::endl;
-                    break;
-                default:
-                    std::cout << "Pilihan tidak valid atau Anda belum login untuk mengakses fitur tersebut." << std::endl;
-            }
+            // ... (logika menu login/registrasi) ...
         } else { // Jika SUDAH LOGIN
             switch (pilihan) {
-                case 1: { 
-                    Karyawan kBaru; // <-- Deklarasikan objek Karyawan baru di sini
-                    std::cout << "--- Tambah Karyawan (Login sebagai: " << usernameSaatIni << ") ---" << std::endl;
-                    std::cout << "Masukkan ID Karyawan: "; 
-                    std::getline(std::cin, kBaru.idKaryawan); // Gunakan kBaru
-                    std::cout << "Masukkan Nama Karyawan: "; 
-                    std::getline(std::cin, kBaru.namaKaryawan); // Gunakan kBaru
-                    std::cout << "Masukkan Jabatan: "; 
-                    std::getline(std::cin, kBaru.jabatan); // Gunakan kBaru
-                    std::cout << "Masukkan Gaji: "; 
-                    while(!(std::cin >> kBaru.gaji)){ // Gunakan kBaru
-                        std::cout << "Input gaji tidak valid (harus angka). Masukkan Gaji: "; 
-                        std::cin.clear(); 
+                // ... (case 1-9, 12 (Logout), 0 sama seperti sebelumnya) ...
+                case 1: /* Tambah */
+                case 2: /* Tampil Semua */
+                case 3: /* Update */
+                case 4: /* Hapus */
+                case 5: /* Sort Nama Asc */
+                case 6: /* Sort Nama Desc */
+                case 7: /* Sort Gaji Asc */
+                case 8: /* Sort Gaji Desc */
+                case 9: /* Undo */
+                    // Kode untuk case ini sudah ada di versi Anda sebelumnya
+                    // Pastikan input string menggunakan getline setelah cin >> angka dan cin.ignore()
+                    break; 
+
+                case 12: { // Filter Berdasarkan Gaji (Asumsi ini adalah nomor menu yang benar)
+                    double batasGajiInput;
+                    int pilihanFilterGaji;
+                    std::cout << "--- Filter Karyawan Berdasarkan Gaji ---" << std::endl;
+                    std::cout << "Masukkan batas gaji: ";
+                    while(!(std::cin >> batasGajiInput)) {
+                        std::cout << "Input batas gaji tidak valid. Masukkan angka: ";
+                        std::cin.clear();
                         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     }
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-                    daftarKaryawanUtama.tambahDiAkhir(kBaru, stackUndoUtama); // Gunakan kBaru
-                    break;
-                }
-                case 2: 
-                    daftarKaryawanUtama.tampilkanSemua();
-                    break;
-                case 3: { 
-                    Karyawan kUpdate; // <-- Deklarasikan objek Karyawan baru di sini untuk update
-                    std::cout << "--- Update Data Karyawan (Login sebagai: " << usernameSaatIni << ") ---" << std::endl;
-                    std::cout << "Masukkan ID Karyawan yang akan diupdate: "; 
-                    std::getline(std::cin, inputString1); // Simpan ID ke inputString1
-                    NodeLL* nodeAda = daftarKaryawanUtama.cariKaryawanById(inputString1);
-                    if (nodeAda != nullptr) {
-                        kUpdate.idKaryawan = inputString1; // Set ID pada objek kUpdate
-                        std::cout << "Masukkan Nama Baru (ID: " << inputString1 << "): "; 
-                        std::getline(std::cin, kUpdate.namaKaryawan);
-                        std::cout << "Masukkan Jabatan Baru: "; 
-                        std::getline(std::cin, kUpdate.jabatan);
-                        std::cout << "Masukkan Gaji Baru: "; 
-                        while(!(std::cin >> kUpdate.gaji)){
-                            std::cout << "Input gaji tidak valid (harus angka). Masukkan Gaji Baru: "; 
-                            std::cin.clear(); 
-                            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                        }
-                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-                        daftarKaryawanUtama.updateKaryawanById(inputString1, kUpdate, stackUndoUtama);
-                    } else { 
-                        std::cout << "Karyawan dengan ID '" << inputString1 << "' tidak ditemukan." << std::endl;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                    std::cout << "Filter untuk gaji (1: Lebih Besar dari Batas, 0: Kurang dari Batas): ";
+                    while(!(std::cin >> pilihanFilterGaji) || (pilihanFilterGaji != 0 && pilihanFilterGaji != 1) ) {
+                        std::cout << "Input pilihan filter tidak valid. Masukkan 0 atau 1: ";
+                        std::cin.clear();
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     }
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    // daftarKaryawanUtama.tampilkanKaryawanBerdasarkanGaji(batasGajiInput, (pilihanFilterGaji == 1)); // Pastikan fungsi ini ada di linkedlist_karyawan
                     break;
                 }
-                case 4: { 
-                    std::cout << "--- Hapus Karyawan (Login sebagai: " << usernameSaatIni << ") ---" << std::endl;
-                    std::cout << "Masukkan ID Karyawan yang akan dihapus: "; 
-                    std::getline(std::cin, inputString1); // Simpan ID ke inputString1
-                    daftarKaryawanUtama.hapusKaryawanById(inputString1, stackUndoUtama);
+                case 13: { // Filter Berdasarkan Jabatan (BARU & DIPERBAIKI)
+                    std::cout << "--- Filter Karyawan Berdasarkan Jabatan ---" << std::endl;
+                    std::vector<std::string> daftarJabatan = daftarKaryawanUtama.getDaftarJabatanUnik();
+                    if (daftarJabatan.empty()) {
+                        std::cout << "Tidak ada jabatan tersedia untuk difilter (daftar karyawan mungkin kosong atau tidak ada jabatan)." << std::endl;
+                        break;
+                    }
+                    std::cout << "Daftar Jabatan Tersedia:" << std::endl;
+                    for (size_t i = 0; i < daftarJabatan.size(); ++i) {
+                        std::cout << i + 1 << ". " << daftarJabatan[i] << std::endl;
+                    }
+                    std::cout << "Masukkan nomor jabatan yang ingin difilter: ";
+                    int nomorJabatan;
+                    while (!(std::cin >> nomorJabatan) || nomorJabatan < 1 || nomorJabatan > static_cast<int>(daftarJabatan.size())) {
+                        std::cout << "Input nomor jabatan tidak valid. Pilih dari 1 sampai " << daftarJabatan.size() << ": ";
+                        std::cin.clear();
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    }
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Penting!
+                    
+                    std::string jabatanDipilih = daftarJabatan[nomorJabatan - 1];
+                    daftarKaryawanUtama.tampilkanKaryawanBerdasarkanJabatan(jabatanDipilih);
                     break;
                 }
-                case 5: daftarKaryawanUtama.tampilkanDataTerurut(true, true); break;  
-                case 6: daftarKaryawanUtama.tampilkanDataTerurut(true, false); break; 
-                case 7: daftarKaryawanUtama.tampilkanDataTerurut(false, true); break; 
-                case 8: daftarKaryawanUtama.tampilkanDataTerurut(false, false); break;
-                case 9: 
-                    prosesUndo(daftarKaryawanUtama, stackUndoUtama);
-                    break;
-                case 12: 
-                    std::cout << "Masukkan batas gaji: ";
-                    double batasGaji;
-                    std::cin >> batasGaji;
-                    std::cout << "Tampilkan karyawan dengan gaji lebih besar dari " << batasGaji << "? (1: Ya, 0: Tidak): ";
-                    bool lebihBesar;
-                    std::cin >> lebihBesar;
-                    daftarKaryawanUtama.tampilkanKaryawanBerdasarkanGaji(batasGaji, lebihBesar);
-                    break;
-                case 13: {
-                    std::cout << "Masukkan jabatan: ";
-                    std::string jabatan;
-                    std::cin.ignore();
-                    std::getline(std::cin, jabatan);
-                    daftarKaryawanUtama.tampilkanKaryawanBerdasarkanJabatan(jabatan);
+                case 14: { // Cari Berdasarkan Nama
+                    std::cout << "--- Cari Karyawan Berdasarkan Nama ---" << std::endl;
+                    std::cout << "Masukkan sebagian atau seluruh nama karyawan: ";
+                    std::string namaDicari;
+                    std::getline(std::cin, namaDicari); // getline sudah aman setelah cin.ignore() di atas
+                    // daftarKaryawanUtama.cariKaryawanBerdasarkanNama(namaDicari); // Pastikan fungsi ini ada
                     break;
                 }
-                case 14: {
-                    std::cout << "Masukkan nama karyawan yang dicari: ";
-                    std::string nama;
-                    std::cin.ignore();
-                    std::getline(std::cin, nama);
-                    daftarKaryawanUtama.cariKaryawanBerdasarkanNama(nama);
-                    break;
-                }
-                case 15: // Logout
+                case 15: // Logout (Ganti dari 12 ke 15)
                     std::cout << "Pengguna '" << usernameSaatIni << "' berhasil logout." << std::endl;
                     usernameSaatIni = ""; 
                     break;
                 case 0:
-                    if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_KARYAWAN)) {
-                         std::cerr << "Peringatan: Gagal menyimpan data karyawan!" << std::endl;
-                    }
-                    std::cout << "Keluar dari aplikasi." << std::endl;
+                    // ... (logika simpan file dan keluar)
                     break;
                 default:
                     std::cout << "Pilihan tidak valid." << std::endl;

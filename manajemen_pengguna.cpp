@@ -1,10 +1,7 @@
 // manajemen_pengguna.cpp
 #include "manajemen_pengguna.h"
 #include <iostream>
-#include <fstream>  
-#include <sstream>  
 
-// Constructor sekarang menerima nama file
 ManajemenPengguna::ManajemenPengguna(const std::string& namaFile) : namaFilePenggunaInternal(namaFile) {
     muatPenggunaDariFile(); 
 }
@@ -15,13 +12,9 @@ ManajemenPengguna::~ManajemenPengguna() {
 
 void ManajemenPengguna::setNamaFile(const std::string& namaFile) {
     namaFilePenggunaInternal = namaFile;
-    // Anda mungkin ingin memuat ulang data dari file baru di sini, atau membersihkan daftar pengguna
-    // daftarPengguna.clear();
-    // muatPenggunaDariFile();
 }
 
-// --- Definisi Static Member ---
-unsigned long ManajemenPengguna::hashPasswordSederhana(const std::string& password) { // Tambahkan scope ManajemenPengguna::
+unsigned long ManajemenPengguna::hashPasswordSederhana(const std::string& password) {
     unsigned long hash = 5381; 
     for (char c : password) {
         hash = ((hash << 5) + hash) + c; 
@@ -29,12 +22,7 @@ unsigned long ManajemenPengguna::hashPasswordSederhana(const std::string& passwo
     return hash;
 }
 
-// --- Definisi Member Function (bukan static lagi jika ingin akses 'daftarPengguna' secara langsung) ---
-// Atau jika tetap static, ia tidak bisa akses 'daftarPengguna' secara langsung.
-// Saya akan membuatnya non-static karena ia perlu akses 'daftarPengguna'.
-// Jika di .h dideklarasikan static dan ingin akses member, maka perlu instance.
-// Berdasarkan deklarasi di .h Anda (non-static), ini seharusnya benar:
-Pengguna* ManajemenPengguna::cariPenggunaInternal(const std::string& username) { // Tambahkan scope ManajemenPengguna::
+Pengguna* ManajemenPengguna::cariPenggunaInternal(const std::string& username) {
     for (size_t i = 0; i < daftarPengguna.size(); ++i) {
         if (daftarPengguna[i].username == username) {
             return &daftarPengguna[i];
@@ -42,8 +30,6 @@ Pengguna* ManajemenPengguna::cariPenggunaInternal(const std::string& username) {
     }
     return nullptr;
 }
-// -----------------------------
-
 
 void ManajemenPengguna::muatPenggunaDariFile() {
     std::ifstream file(namaFilePenggunaInternal); 
@@ -91,14 +77,12 @@ bool ManajemenPengguna::registrasiPenggunaBaru(const std::string& username, cons
         std::cout << "Error: Username dan password tidak boleh kosong." << std::endl;
         return false;
     }
-    // Memanggil cariPenggunaInternal sebagai member function
     if (this->cariPenggunaInternal(username) != nullptr) { 
         std::cout << "Error: Username '" << username << "' sudah terdaftar." << std::endl;
         return false;
     }
     Pengguna penggunaBaru;
     penggunaBaru.username = username;
-    // Memanggil hashPasswordSederhana sebagai static member function
     penggunaBaru.hashedPassword = ManajemenPengguna::hashPasswordSederhana(password); 
     daftarPengguna.push_back(penggunaBaru);
     std::cout << "Info: Pengguna '" << username << "' berhasil diregistrasi." << std::endl;
@@ -106,13 +90,11 @@ bool ManajemenPengguna::registrasiPenggunaBaru(const std::string& username, cons
 }
 
 bool ManajemenPengguna::loginPengguna(const std::string& username, const std::string& password) {
-    // Memanggil cariPenggunaInternal sebagai member function
     Pengguna* pengguna = this->cariPenggunaInternal(username); 
     if (pengguna == nullptr) {
         std::cout << "Error: Username '" << username << "' tidak ditemukan." << std::endl;
         return false;
     }
-    // Memanggil hashPasswordSederhana sebagai static member function
     if (pengguna->hashedPassword == ManajemenPengguna::hashPasswordSederhana(password)) { 
         std::cout << "Info: Login berhasil untuk pengguna '" << username << "'." << std::endl;
         return true;

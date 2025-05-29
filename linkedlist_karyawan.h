@@ -3,10 +3,11 @@
 #define LINKEDLIST_KARYAWAN_H
 
 #include "karyawan.h"
-#include "stack_aksi.h" // Diperlukan untuk overload fungsi
+#include "stack_aksi.h" 
 #include <iostream>
 #include <string>
 #include <vector>
+#include <set> // Ditambahkan untuk getDaftarJabatanUnik
 
 struct NodeLL {
     Karyawan dataKaryawan;
@@ -34,32 +35,24 @@ public:
     void tampilkanSemua() const;
     NodeLL* cariKaryawanById(const std::string& idKaryawan) const;
 
-    // Fungsi dengan kapabilitas Undo
     void tambahDiAkhir(const Karyawan& k, StackAksi& undoStack);
     bool hapusKaryawanById(const std::string& idKaryawan, StackAksi& undoStack);
     bool updateKaryawanById(const std::string& idKaryawan, const Karyawan& dataBaru, StackAksi& undoStack);
 
-    // Overload fungsi untuk penggunaan tanpa Undo (misal, untuk tes awal atau menu interaktif sebelum undo diimplementasikan)
     void tambahDiAkhir(const Karyawan& k);
     bool hapusKaryawanById(const std::string& idKaryawan);
     bool updateKaryawanById(const std::string& idKaryawan, const Karyawan& dataBaru);
     
     void tampilkanDataTerurut(bool berdasarkanNama, bool ascending);
 
-    // Deklarasi fungsi baru untuk operasi file
     bool simpanKeFile(const std::string& namaFile) const;
     bool muatDariFile(const std::string& namaFile, StackAksi& undoStack);
-
-    // Overload untuk muatDariFile tanpa undoStack (misalnya untuk pemanggilan awal)
     bool muatDariFile(const std::string& namaFile);
-    // Fungsi untuk filtering gaji
+
     void tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool lebihBesar) const;
-    // Fungsi untuk filtering jabatan
-    void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const;
-    // Fungsi untuk mencari karyawan berdasarkan nama
+    void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const; // Hanya satu deklarasi
     void cariKaryawanBerdasarkanNama(const std::string& nama) const;
+    std::vector<std::string> getDaftarJabatanUnik() const;
 };
-
-
 
 #endif // LINKEDLIST_KARYAWAN_H

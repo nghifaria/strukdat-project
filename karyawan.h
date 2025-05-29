@@ -4,7 +4,6 @@
 
 #include <string>
 
-// Definisi struct untuk Karyawan
 struct Karyawan {
     std::string idKaryawan;
     std::string namaKaryawan;

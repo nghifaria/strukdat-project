@@ -5,11 +5,13 @@
 #include "pengguna.h"
 #include <string>
 #include <vector>
+#include <fstream> 
+#include <sstream> 
 
 class ManajemenPengguna {
 private:
     std::vector<Pengguna> daftarPengguna;
-    std::string namaFilePenggunaInternal; // Nama file yang digunakan oleh instance ini
+    std::string namaFilePenggunaInternal;
 
     static unsigned long hashPasswordSederhana(const std::string& password);
     Pengguna* cariPenggunaInternal(const std::string& username);
@@ -18,13 +20,13 @@ private:
     void simpanSemuaPenggunaKeFile() const;
 
 public:
-    ManajemenPengguna(const std::string& namaFile = "pengguna_data.csv"); // Constructor dengan nama file default
+    ManajemenPengguna(const std::string& namaFile = "pengguna_data.csv");
     ~ManajemenPengguna(); 
 
     bool registrasiPenggunaBaru(const std::string& username, const std::string& password);
     bool loginPengguna(const std::string& username, const std::string& password);
     void tampilkanSemuaPenggunaDebug() const;
-    void setNamaFile(const std::string& namaFile); // Untuk mengubah nama file jika perlu (jarang dipakai)
+    void setNamaFile(const std::string& namaFile);
 };
 
 #endif // MANAJEMEN_PENGGUNA_H

@@ -6,8 +6,7 @@
 
 struct Pengguna {
     std::string username;
-    unsigned long hashedPassword; // Menyimpan hash dari password
-    // Bisa ditambahkan role atau atribut lain nanti
+    unsigned long hashedPassword;
 };
 
 #endif // PENGGUNA_H
