@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <set> 
+#include <set> // Ditambahkan untuk getDaftarJabatanUnik
 
 struct NodeLL {
     Karyawan dataKaryawan;
@@ -46,13 +46,15 @@ public:
     void tampilkanDataTerurut(bool berdasarkanNama, bool ascending);
 
     bool simpanKeFile(const std::string& namaFile) const;
-    bool muatDariFile(const std::string& namaFile, StackAksi& undoStack); // Untuk konsistensi, meski stack mungkin dummy
+    bool muatDariFile(const std::string& namaFile, StackAksi& undoStack);
     bool muatDariFile(const std::string& namaFile);
 
     void tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool lebihBesar) const;
-    void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const;
+    void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const; // Hanya satu deklarasi
     void cariKaryawanBerdasarkanNama(const std::string& nama) const;
     std::vector<std::string> getDaftarJabatanUnik() const;
+
+    
 };
 
 #endif // LINKEDLIST_KARYAWAN_H
