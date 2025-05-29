@@ -44,7 +44,7 @@ void tesLinkedListKaryawan() {
     std::cout << "Test 1 (Initial state): Lolos" << std::endl;
 
     Karyawan kar1_test = {"TL001", "Test Budi", "Test Staf", 5000000};
-    Karyawan kar2_test = {"TL002", "Test Citra", "Test SPV",  };
+    Karyawan kar2_test = {"TL002", "Test Citra", "Test SPV", 7000000};
     listSaya.tambahDiAkhir(kar1_test); 
     listSaya.tambahDiAkhir(kar2_test);
     assert(listSaya.getJumlahNode() == 2);

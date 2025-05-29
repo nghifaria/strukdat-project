@@ -1,13 +1,8 @@
 // linkedlist_karyawan.cpp
 #include "linkedlist_karyawan.h"
-// #include <vector> // Sudah di-include di .h
-// #include <algorithm> // Tidak digunakan jika tukarKaryawan manual
-// #include <stdexcept> // Sudah di-include di stack_aksi.cpp jika error dilempar dari sana
-#include "linkedlist_karyawan.h"
 #include <fstream>   // Untuk operasi file (ofstream, ifstream)
 #include <sstream>   // Untuk std::stringstream (mem-parsing baris CSV)
 #include <vector>    // Sudah ada untuk sorting
-
 
 // Constructor
 LinkedListKaryawan::LinkedListKaryawan() : head(nullptr), tail(nullptr), jumlahNode(0) {}
@@ -18,7 +13,7 @@ LinkedListKaryawan::~LinkedListKaryawan() {
 }
 
 // --- Definisi Static Member ---
-void LinkedListKaryawan::tukarKaryawan(Karyawan& a, Karyawan& b) { // Definisi static member yang benar
+void LinkedListKaryawan::tukarKaryawan(Karyawan& a, Karyawan& b) {
     Karyawan temp = a;
     a = b;
     b = temp;
@@ -74,7 +69,7 @@ void LinkedListKaryawan::tambahDiAkhir(const Karyawan& k, StackAksi& undoStack) 
 
 bool LinkedListKaryawan::hapusKaryawanById(const std::string& idKaryawan, StackAksi& undoStack) {
     if (isEmpty()) {
-         std::cout << "Info: Linked list kosong, tidak ada yang bisa dihapus (dengan undo)." << std::endl;
+        std::cout << "Info: Linked list kosong, tidak ada yang bisa dihapus (dengan undo)." << std::endl;
         return false;
     }
     NodeLL* current = head;
@@ -117,7 +112,6 @@ bool LinkedListKaryawan::updateKaryawanById(const std::string& idKaryawan, const
 }
 
 // --- Implementasi Overload Fungsi (tanpa StackAksi) ---
-// Implementasi ini ditambahkan untuk mengatasi error undefined reference dari tes lama
 void LinkedListKaryawan::tambahDiAkhir(const Karyawan& k) {
     NodeLL* newNode = new NodeLL(k);
     if (isEmpty()) {
@@ -139,7 +133,7 @@ bool LinkedListKaryawan::hapusKaryawanById(const std::string& idKaryawan) {
         prev = current;
         current = current->next;
     }
-    if (current == nullptr) { std::cout << "Info: Karyawan tidak ditemukan (non-undo)." << std::endl; return false;}
+    if (current == nullptr) { std::cout << "Info: Karyawan tidak ditemukan (non-undo)." << std::endl; return false; }
 
     if (current == head) {
         head = head->next;
@@ -193,7 +187,6 @@ int LinkedListKaryawan::partitionKaryawan(std::vector<Karyawan>& arr, int low, i
     for (int j = low; j <= high - 1; j++) {
         bool harusTukar = false;
         if (berdasarkanNama) {
-            // Menggunakan ternary operator untuk menyederhanakan kondisi
             if (ascending ? (arr[j].namaKaryawan < pivot.namaKaryawan) : (arr[j].namaKaryawan > pivot.namaKaryawan))
                 harusTukar = true;
         } else { // Berdasarkan gaji
@@ -202,7 +195,6 @@ int LinkedListKaryawan::partitionKaryawan(std::vector<Karyawan>& arr, int low, i
         }
         if (harusTukar) {
             i++;
-            // Memanggil static member function. Bisa juga langsung tukarKaryawan(...)
             LinkedListKaryawan::tukarKaryawan(arr[i], arr[j]);
         }
     }
@@ -248,11 +240,6 @@ void LinkedListKaryawan::tampilkanDataTerurut(bool berdasarkanNama, bool ascendi
     std::cout << "---------------------------------------------------------------------" << std::endl;
 }
 
-
-// Hapus definisi tukarKaryawan global yang mungkin masih ada di akhir file ini.
-// void tukarKaryawan(Karyawan& a, Karyawan& b) { ... } // <--- HAPUS JIKA ADA
-
-
 // Menyimpan semua data karyawan ke file CSV
 bool LinkedListKaryawan::simpanKeFile(const std::string& namaFile) const {
     std::ofstream fileOutput(namaFile); // Membuka file untuk ditulis (overwrite jika sudah ada)
@@ -285,11 +272,7 @@ bool LinkedListKaryawan::muatDariFile(const std::string& namaFile, StackAksi& un
         return false; // Tidak dianggap error fatal, aplikasi bisa mulai dengan list kosong
     }
 
-    // Kosongkan list saat ini sebelum memuat dari file (jika ini adalah pemuatan awal)
-    // Atau, jika ini adalah fungsi "impor", mungkin Anda tidak ingin mengosongkan.
-    // Untuk sekarang, kita asumsikan ini pemuatan awal, jadi kita kosongkan.
-    // Pastikan ini tidak memicu undo jika tidak diinginkan.
-    hapusSemuaNode(); // Panggil versi internal yang tidak push ke undoStack
+    hapusSemuaNode(); // Kosongkan list saat ini sebelum memuat dari file
 
     std::string baris;
     Karyawan kTemp;
@@ -304,12 +287,9 @@ bool LinkedListKaryawan::muatDariFile(const std::string& namaFile, StackAksi& un
         if (std::getline(ss, kTemp.idKaryawan, ',') &&
             std::getline(ss, kTemp.namaKaryawan, ',') &&
             std::getline(ss, kTemp.jabatan, ',') &&
-            (ss >> kTemp.gaji) ) { // Baca gaji sebagai double
+            (ss >> kTemp.gaji)) { // Baca gaji sebagai double
             
-            // Saat memuat dari file, biasanya kita tidak ingin mencatat setiap item ke undoStack
-            // sebagai aksi individual yang bisa di-undo.
-            // Jika Anda ingin pemuatan ini bisa di-undo sebagai satu kesatuan, logikanya akan lebih kompleks.
-            // Untuk sekarang, kita panggil tambahDiAkhir versi non-undo.
+            // Tambah karyawan ke list tanpa mencatat ke undoStack
             tambahDiAkhir(kTemp); // Panggil overload yang tidak push ke undoStack
         } else {
             std::cerr << "Peringatan: Baris tidak valid di file '" << namaFile << "': " << baris << std::endl;
@@ -325,4 +305,77 @@ bool LinkedListKaryawan::muatDariFile(const std::string& namaFile, StackAksi& un
 bool LinkedListKaryawan::muatDariFile(const std::string& namaFile) {
     StackAksi dummyStack; // Buat dummy stack karena fungsi target memerlukan referensi StackAksi
     return muatDariFile(namaFile, dummyStack);
+}
+
+// Fungsi untuk menampilkan karyawan berdasarkan gaji
+void LinkedListKaryawan::tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool lebihBesar) const {
+    if (isEmpty()) {
+        std::cout << "Daftar karyawan kosong." << std::endl;
+        return;
+    }
+    std::cout << "\n--- Karyawan dengan Gaji " << (lebihBesar ? "lebih besar" : "kurang dari") << " " << batasGaji << " ---" << std::endl;
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+    
+    NodeLL* current = head;
+    while (current != nullptr) {
+        if ((lebihBesar && current->dataKaryawan.gaji > batasGaji) || 
+            (!lebihBesar && current->dataKaryawan.gaji < batasGaji)) {
+            std::cout << current->dataKaryawan.idKaryawan << "\t\t"
+                      << current->dataKaryawan.namaKaryawan << "\t\t"
+                      << current->dataKaryawan.jabatan << "\t\t"
+                      << current->dataKaryawan.gaji << std::endl;
+        }
+        current = current->next;
+    }
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+}
+
+// Fungsi untuk menampilkan karyawan berdasarkan jabatan
+void LinkedListKaryawan::tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const {
+    if (isEmpty()) {
+        std::cout << "Daftar karyawan kosong." << std::endl;
+        return;
+    }
+    std::cout << "\n--- Karyawan dengan Jabatan: " << jabatan << " ---" << std::endl;
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+    
+    NodeLL* current = head;
+    while (current != nullptr) {
+        if (current->dataKaryawan.jabatan == jabatan) {
+            std::cout << current->dataKaryawan.idKaryawan << "\t\t"
+                      << current->dataKaryawan.namaKaryawan << "\t\t"
+                      << current->dataKaryawan.jabatan << "\t\t"
+                      << current->dataKaryawan.gaji << std::endl;
+        }
+        current = current->next;
+    }
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+}
+
+// Fungsi untuk mencari karyawan berdasarkan nama
+void LinkedListKaryawan::cariKaryawanBerdasarkanNama(const std::string& nama) const {
+    if (isEmpty()) {
+        std::cout << "Daftar karyawan kosong." << std::endl;
+        return;
+    }
+    std::cout << "\n--- Karyawan dengan Nama: " << nama << " ---" << std::endl;
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
+    std::cout << "---------------------------------------------------------------------" << std::endl;
+    
+    NodeLL* current = head;
+    while (current != nullptr) {
+        if (current->dataKaryawan.namaKaryawan.find(nama) != std::string::npos) {
+            std::cout << current->dataKaryawan.idKaryawan << "\t\t"
+                      << current->dataKaryawan.namaKaryawan << "\t\t"
+                      << current->dataKaryawan.jabatan << "\t\t"
+                      << current->dataKaryawan.gaji << std::endl;
+        }
+        current = current->next;
+    }
+    std::cout << "---------------------------------------------------------------------" << std::endl;
 }

@@ -52,6 +52,14 @@ public:
 
     // Overload untuk muatDariFile tanpa undoStack (misalnya untuk pemanggilan awal)
     bool muatDariFile(const std::string& namaFile);
+    // Fungsi untuk filtering gaji
+    void tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool lebihBesar) const;
+    // Fungsi untuk filtering jabatan
+    void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const;
+    // Fungsi untuk mencari karyawan berdasarkan nama
+    void cariKaryawanBerdasarkanNama(const std::string& nama) const;
 };
+
+
 
 #endif // LINKEDLIST_KARYAWAN_H
