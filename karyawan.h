@@ -9,6 +9,9 @@ struct Karyawan {
     std::string namaKaryawan;
     std::string jabatan;
     double gaji;
+    std::string idAtasan; 
+
+    Karyawan() : gaji(0.0) {} 
 };
 
 #endif // KARYAWAN_H

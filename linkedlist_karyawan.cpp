@@ -1,22 +1,18 @@
 // linkedlist_karyawan.cpp
 #include "linkedlist_karyawan.h"
-#include <fstream>   
-#include <sstream>   
-#include <vector>    
-#include <algorithm> 
-#include <set>       
-#include <cctype> 
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <algorithm>
+#include <iomanip>
+#include <cctype>
+#include <set>
+
 
 LinkedListKaryawan::LinkedListKaryawan() : head(nullptr), tail(nullptr), jumlahNode(0) {}
 
 LinkedListKaryawan::~LinkedListKaryawan() {
     hapusSemuaNode();
-}
-
-void LinkedListKaryawan::tukarKaryawan(Karyawan& a, Karyawan& b) {
-    Karyawan temp = a;
-    a = b;
-    b = temp;
 }
 
 void LinkedListKaryawan::hapusSemuaNode() {
@@ -49,6 +45,12 @@ NodeLL* LinkedListKaryawan::cariKaryawanById(const std::string& idKaryawan) cons
         current = current->next;
     }
     return nullptr;
+}
+
+void LinkedListKaryawan::tukarKaryawan(Karyawan& a, Karyawan& b) {
+    Karyawan temp = a;
+    a = b;
+    b = temp;
 }
 
 void LinkedListKaryawan::tambahDiAkhir(const Karyawan& k, StackAksi& undoStack) {
@@ -90,7 +92,7 @@ bool LinkedListKaryawan::hapusKaryawanById(const std::string& idKaryawan, StackA
     }
     delete current;
     jumlahNode--;
-    std::cout << "Info: Karyawan dengan ID '" << idKaryawan << "' berhasil dihapus (dengan undo)." << std::endl;
+    std::cout << "Info: Karyawan dengan ID '" << idKaryawan << "' (" << karyawanDihapus.namaKaryawan << ") berhasil dihapus." << std::endl;
     undoStack.push(AksiUndo(TipeAksi::HAPUS, karyawanDihapus));
     return true;
 }
@@ -108,7 +110,6 @@ bool LinkedListKaryawan::updateKaryawanById(const std::string& idKaryawan, const
     return false;
 }
 
-// --- IMPLEMENTASI OVERLOAD FUNGSI (TANPA STACKAKSI) ---
 void LinkedListKaryawan::tambahDiAkhir(const Karyawan& k) {
     NodeLL* newNode = new NodeLL(k);
     if (isEmpty()) {
@@ -119,13 +120,11 @@ void LinkedListKaryawan::tambahDiAkhir(const Karyawan& k) {
         tail = newNode;
     }
     jumlahNode++;
-    std::cout << "Info: Karyawan '" << k.namaKaryawan << "' (ID: " << k.idKaryawan << ") ditambahkan (non-undo)." << std::endl;
 }
 
 bool LinkedListKaryawan::hapusKaryawanById(const std::string& idKaryawan) {
-    if (isEmpty()) { 
-        std::cout << "Info: List karyawan kosong (operasi non-undo)." << std::endl; 
-        return false; 
+    if (isEmpty()) {
+        return false;
     }
     NodeLL* current = head;
     NodeLL* prev = nullptr;
@@ -133,8 +132,7 @@ bool LinkedListKaryawan::hapusKaryawanById(const std::string& idKaryawan) {
         prev = current;
         current = current->next;
     }
-    if (current == nullptr) { 
-        std::cout << "Info: Karyawan dengan ID '" << idKaryawan << "' tidak ditemukan (operasi non-undo)." << std::endl; 
+    if (current == nullptr) {
         return false;
     }
     if (current == head) {
@@ -146,7 +144,6 @@ bool LinkedListKaryawan::hapusKaryawanById(const std::string& idKaryawan) {
     }
     delete current;
     jumlahNode--;
-    std::cout << "Info: Karyawan dengan ID '" << idKaryawan << "' berhasil dihapus (non-undo)." << std::endl;
     return true;
 }
 
@@ -154,13 +151,10 @@ bool LinkedListKaryawan::updateKaryawanById(const std::string& idKaryawan, const
     NodeLL* nodeToUpdate = cariKaryawanById(idKaryawan);
     if (nodeToUpdate != nullptr) {
         nodeToUpdate->dataKaryawan = dataBaru;
-        std::cout << "Info: Data karyawan dengan ID '" << idKaryawan << "' berhasil diupdate (non-undo)." << std::endl;
         return true;
     }
-    std::cout << "Info: Karyawan dengan ID '" << idKaryawan << "' tidak ditemukan untuk diupdate (non-undo)." << std::endl;
     return false;
 }
-// -----------------------------------------------------
 
 
 void LinkedListKaryawan::tampilkanSemua() const {
@@ -169,17 +163,22 @@ void LinkedListKaryawan::tampilkanSemua() const {
         return;
     }
     std::cout << "\n--- Daftar Semua Karyawan ---" << std::endl;
-    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << std::left << std::setw(10) << "ID"
+              << std::setw(25) << "Nama"
+              << std::setw(20) << "Jabatan"
+              << std::setw(15) << "ID Atasan"
+              << std::right << std::setw(10) << "Gaji" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
     NodeLL* current = head;
     while (current != nullptr) {
-        std::cout << current->dataKaryawan.idKaryawan << "\t\t"
-                  << current->dataKaryawan.namaKaryawan << "\t\t"
-                  << current->dataKaryawan.jabatan << "\t\t"
-                  << current->dataKaryawan.gaji << std::endl;
+        std::cout << std::left << std::setw(10) << current->dataKaryawan.idKaryawan
+                  << std::setw(25) << current->dataKaryawan.namaKaryawan
+                  << std::setw(20) << current->dataKaryawan.jabatan
+                  << std::setw(15) << (current->dataKaryawan.idAtasan.empty() ? "-" : current->dataKaryawan.idAtasan)
+                  << std::right << std::setw(10) << std::fixed << std::setprecision(2) << current->dataKaryawan.gaji << std::endl;
         current = current->next;
     }
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
     std::cout << "Total Karyawan: " << jumlahNode << std::endl;
 }
 
@@ -191,7 +190,7 @@ int LinkedListKaryawan::partitionKaryawan(std::vector<Karyawan>& arr, int low, i
         if (berdasarkanNama) {
             if (ascending ? (arr[j].namaKaryawan < pivot.namaKaryawan) : (arr[j].namaKaryawan > pivot.namaKaryawan))
                 harusTukar = true;
-        } else { 
+        } else {
             if (ascending ? (arr[j].gaji < pivot.gaji) : (arr[j].gaji > pivot.gaji))
                 harusTukar = true;
         }
@@ -230,19 +229,24 @@ void LinkedListKaryawan::tampilkanDataTerurut(bool berdasarkanNama, bool ascendi
               << (berdasarkanNama ? "Nama" : "Gaji")
               << ", " << (ascending ? "Ascending" : "Descending")
               << ") ---" << std::endl;
-    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << std::left << std::setw(10) << "ID"
+              << std::setw(25) << "Nama"
+              << std::setw(20) << "Jabatan"
+              << std::setw(15) << "ID Atasan"
+              << std::right << std::setw(10) << "Gaji" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
     for (const auto& k : arrKaryawan) {
-        std::cout << k.idKaryawan << "\t\t"
-                  << k.namaKaryawan << "\t\t"
-                  << k.jabatan << "\t\t"
-                  << k.gaji << std::endl;
+        std::cout << std::left << std::setw(10) << k.idKaryawan
+                  << std::setw(25) << k.namaKaryawan
+                  << std::setw(20) << k.jabatan
+                  << std::setw(15) << (k.idAtasan.empty() ? "-" : k.idAtasan)
+                  << std::right << std::setw(10) << std::fixed << std::setprecision(2) << k.gaji << std::endl;
     }
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
 }
 
 bool LinkedListKaryawan::simpanKeFile(const std::string& namaFile) const {
-    std::ofstream fileOutput(namaFile); 
+    std::ofstream fileOutput(namaFile);
     if (!fileOutput.is_open()) {
         std::cerr << "Error: Tidak dapat membuka file '" << namaFile << "' untuk ditulis." << std::endl;
         return false;
@@ -252,7 +256,8 @@ bool LinkedListKaryawan::simpanKeFile(const std::string& namaFile) const {
         fileOutput << current->dataKaryawan.idKaryawan << ","
                    << current->dataKaryawan.namaKaryawan << ","
                    << current->dataKaryawan.jabatan << ","
-                   << current->dataKaryawan.gaji << "\n";
+                   << current->dataKaryawan.gaji << ","
+                   << current->dataKaryawan.idAtasan << "\n";
         current = current->next;
     }
     fileOutput.close();
@@ -260,39 +265,38 @@ bool LinkedListKaryawan::simpanKeFile(const std::string& namaFile) const {
     return true;
 }
 
-bool LinkedListKaryawan::muatDariFile(const std::string& namaFile, StackAksi& /*unusedUndoStack*/) {
-    std::ifstream fileInput(namaFile); 
+bool LinkedListKaryawan::muatDariFile(const std::string& namaFile) {
+    std::ifstream fileInput(namaFile);
     if (!fileInput.is_open()) {
-        std::cout << "Info: File '" << namaFile << "' tidak ditemukan atau tidak dapat dibuka. Memulai dengan list karyawan kosong." << std::endl;
-        return false; 
+        return false;
     }
-    hapusSemuaNode(); 
+    hapusSemuaNode();
     std::string baris;
     Karyawan kTemp;
     while (std::getline(fileInput, baris)) {
         std::stringstream ss(baris);
+        std::string gajiStr;
         if (std::getline(ss, kTemp.idKaryawan, ',') &&
             std::getline(ss, kTemp.namaKaryawan, ',') &&
             std::getline(ss, kTemp.jabatan, ',') &&
-            (ss >> kTemp.gaji) ) { 
-            tambahDiAkhir(kTemp); 
+            std::getline(ss, gajiStr, ',') &&
+            std::getline(ss, kTemp.idAtasan) ) {
+            try {
+                kTemp.gaji = std::stod(gajiStr);
+                tambahDiAkhir(kTemp);
+            } catch (const std::exception& e) {
+                 std::cerr << "Peringatan: Format gaji/baris tidak valid di file karyawan untuk ID " << kTemp.idKaryawan << ": " << baris << std::endl;
+            }
         } else {
             if(!baris.empty()){
-                 std::cerr << "Peringatan: Baris tidak valid di file karyawan '" << namaFile << "': " << baris << std::endl;
+                 std::cerr << "Peringatan: Baris tidak lengkap di file karyawan '" << namaFile << "': " << baris << std::endl;
             }
         }
     }
     fileInput.close();
-    if (jumlahNode > 0) {
-        std::cout << "Info: Data karyawan berhasil dimuat dari '" << namaFile << "'." << std::endl;
-    }
     return true;
 }
 
-bool LinkedListKaryawan::muatDariFile(const std::string& namaFile) {
-    StackAksi dummyStack; 
-    return muatDariFile(namaFile, dummyStack);
-}
 
 void LinkedListKaryawan::tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool lebihBesar) const {
     if (isEmpty()) {
@@ -300,17 +304,22 @@ void LinkedListKaryawan::tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool
         return;
     }
     std::cout << "\n--- Karyawan dengan Gaji " << (lebihBesar ? "lebih besar dari atau sama dengan" : "kurang dari") << " " << batasGaji << " ---" << std::endl;
-    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << std::left << std::setw(10) << "ID"
+              << std::setw(25) << "Nama"
+              << std::setw(20) << "Jabatan"
+              << std::setw(15) << "ID Atasan"
+              << std::right << std::setw(10) << "Gaji" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
     NodeLL* current = head;
     bool ditemukan = false;
     while (current != nullptr) {
-        if ((lebihBesar && current->dataKaryawan.gaji >= batasGaji) || 
+        if ((lebihBesar && current->dataKaryawan.gaji >= batasGaji) ||
             (!lebihBesar && current->dataKaryawan.gaji < batasGaji)) {
-            std::cout << current->dataKaryawan.idKaryawan << "\t\t"
-                      << current->dataKaryawan.namaKaryawan << "\t\t"
-                      << current->dataKaryawan.jabatan << "\t\t"
-                      << current->dataKaryawan.gaji << std::endl;
+            std::cout << std::left << std::setw(10) << current->dataKaryawan.idKaryawan
+                      << std::setw(25) << current->dataKaryawan.namaKaryawan
+                      << std::setw(20) << current->dataKaryawan.jabatan
+                      << std::setw(15) << (current->dataKaryawan.idAtasan.empty() ? "-" : current->dataKaryawan.idAtasan)
+                      << std::right << std::setw(10) << std::fixed << std::setprecision(2) << current->dataKaryawan.gaji << std::endl;
             ditemukan = true;
         }
         current = current->next;
@@ -318,7 +327,7 @@ void LinkedListKaryawan::tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool
      if (!ditemukan) {
         std::cout << "Tidak ada karyawan yang memenuhi kriteria gaji tersebut." << std::endl;
     }
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
 }
 
 void LinkedListKaryawan::tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const {
@@ -327,16 +336,21 @@ void LinkedListKaryawan::tampilkanKaryawanBerdasarkanJabatan(const std::string& 
         return;
     }
     std::cout << "\n--- Karyawan dengan Jabatan: " << jabatan << " ---" << std::endl;
-    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << std::left << std::setw(10) << "ID"
+              << std::setw(25) << "Nama"
+              << std::setw(20) << "Jabatan"
+              << std::setw(15) << "ID Atasan"
+              << std::right << std::setw(10) << "Gaji" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
     NodeLL* current = head;
     bool ditemukan = false;
     while (current != nullptr) {
         if (current->dataKaryawan.jabatan == jabatan) {
-            std::cout << current->dataKaryawan.idKaryawan << "\t\t"
-                      << current->dataKaryawan.namaKaryawan << "\t\t"
-                      << current->dataKaryawan.jabatan << "\t\t"
-                      << current->dataKaryawan.gaji << std::endl;
+            std::cout << std::left << std::setw(10) << current->dataKaryawan.idKaryawan
+                      << std::setw(25) << current->dataKaryawan.namaKaryawan
+                      << std::setw(20) << current->dataKaryawan.jabatan
+                      << std::setw(15) << (current->dataKaryawan.idAtasan.empty() ? "-" : current->dataKaryawan.idAtasan)
+                      << std::right << std::setw(10) << std::fixed << std::setprecision(2) << current->dataKaryawan.gaji << std::endl;
             ditemukan = true;
         }
         current = current->next;
@@ -344,7 +358,7 @@ void LinkedListKaryawan::tampilkanKaryawanBerdasarkanJabatan(const std::string& 
     if (!ditemukan) {
         std::cout << "Tidak ada karyawan dengan jabatan '" << jabatan << "'." << std::endl;
     }
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
 }
 
 void LinkedListKaryawan::cariKaryawanBerdasarkanNama(const std::string& nama) const {
@@ -353,8 +367,12 @@ void LinkedListKaryawan::cariKaryawanBerdasarkanNama(const std::string& nama) co
         return;
     }
     std::cout << "\n--- Hasil Pencarian Karyawan dengan Nama mengandung: '" << nama << "' ---" << std::endl;
-    std::cout << "ID\t\tNama\t\t\tJabatan\t\t\tGaji" << std::endl;
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << std::left << std::setw(10) << "ID"
+              << std::setw(25) << "Nama"
+              << std::setw(20) << "Jabatan"
+              << std::setw(15) << "ID Atasan"
+              << std::right << std::setw(10) << "Gaji" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
     NodeLL* current = head;
     bool ditemukan = false;
     std::string namaLower = nama;
@@ -365,10 +383,11 @@ void LinkedListKaryawan::cariKaryawanBerdasarkanNama(const std::string& nama) co
         for(char &c : namaKaryawanLower) { c = std::tolower(c); }
 
         if (namaKaryawanLower.find(namaLower) != std::string::npos) {
-            std::cout << current->dataKaryawan.idKaryawan << "\t\t"
-                      << current->dataKaryawan.namaKaryawan << "\t\t"
-                      << current->dataKaryawan.jabatan << "\t\t"
-                      << current->dataKaryawan.gaji << std::endl;
+            std::cout << std::left << std::setw(10) << current->dataKaryawan.idKaryawan
+                      << std::setw(25) << current->dataKaryawan.namaKaryawan
+                      << std::setw(20) << current->dataKaryawan.jabatan
+                      << std::setw(15) << (current->dataKaryawan.idAtasan.empty() ? "-" : current->dataKaryawan.idAtasan)
+                      << std::right << std::setw(10) << std::fixed << std::setprecision(2) << current->dataKaryawan.gaji << std::endl;
             ditemukan = true;
         }
         current = current->next;
@@ -376,17 +395,17 @@ void LinkedListKaryawan::cariKaryawanBerdasarkanNama(const std::string& nama) co
      if (!ditemukan) {
         std::cout << "Tidak ada karyawan dengan nama yang cocok ditemukan." << std::endl;
     }
-    std::cout << "---------------------------------------------------------------------" << std::endl;
+    std::cout << "------------------------------------------------------------------------------------" << std::endl;
 }
 
 std::vector<std::string> LinkedListKaryawan::getDaftarJabatanUnik() const {
     if (isEmpty()) {
         return {};
     }
-    std::set<std::string> setJabatan; 
+    std::set<std::string> setJabatan;
     NodeLL* current = head;
     while (current != nullptr) {
-        if (!current->dataKaryawan.jabatan.empty()) { 
+        if (!current->dataKaryawan.jabatan.empty()) {
              setJabatan.insert(current->dataKaryawan.jabatan);
         }
         current = current->next;

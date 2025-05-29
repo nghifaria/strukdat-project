@@ -9,7 +9,8 @@ TARGET = aplikasi_karyawan
 SRCS = main.cpp \
        linkedlist_karyawan.cpp \
        manajemen_pengguna.cpp \
-       stack_aksi.cpp
+       stack_aksi.cpp \
+       hierarki_jabatan.cpp
 
 # File object hasil kompilasi
 OBJS = $(SRCS:.cpp=.o)

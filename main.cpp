@@ -5,12 +5,14 @@
 #include <limits>
 #include <iomanip>
 #include <cstdio>
+#include <map> 
 
 #include "karyawan.h"
 #include "linkedlist_karyawan.h"
 #include "stack_aksi.h"
 #include "pengguna.h"
 #include "manajemen_pengguna.h"
+#include "hierarki_jabatan.h" 
 
 
 const std::string NAMA_FILE_KARYAWAN = "karyawan_data.csv";
@@ -18,12 +20,13 @@ const std::string NAMA_FILE_PENGGUNA_UTAMA = "pengguna_data.csv";
 
 
 void tampilkanMenuUtama(ManajemenPengguna& manajerPengguna);
-void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna);
-void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna);
+void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan);
+void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan);
 void prosesMenuTampilkanDanUrutkan(LinkedListKaryawan& daftarKaryawan);
 void prosesMenuFilterDanCari(LinkedListKaryawan& daftarKaryawan);
-void prosesUndo(LinkedListKaryawan& list, StackAksi& undoStack, ManajemenPengguna& manajerPengguna);
+void prosesUndo(LinkedListKaryawan& list, StackAksi& undoStack, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan);
 void prosesMenuAdmin(ManajemenPengguna& manajerPengguna);
+void prosesMenuHierarki(PohonJabatan& pohonJabatan, const LinkedListKaryawan& daftarKaryawan);
 
 
 void getInputString(const std::string& prompt, std::string& output) {
@@ -61,12 +64,13 @@ int getInputPilihan(const std::string& prompt, int minPilihan, int maxPilihan) {
     }
 }
 
-void prosesUndo(LinkedListKaryawan& list, StackAksi& undoStack, ManajemenPengguna& manajerPengguna) {
+void prosesUndo(LinkedListKaryawan& list, StackAksi& undoStack, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan) {
     if (undoStack.isEmpty()) {
         std::cout << "Tidak ada aksi untuk di-undo." << std::endl;
         return;
     }
     AksiUndo aksiTerakhir = undoStack.pop();
+    std::string idCEO = "CEO001"; 
 
     switch (aksiTerakhir.tipe) {
         case TipeAksi::TAMBAH:
@@ -86,7 +90,9 @@ void prosesUndo(LinkedListKaryawan& list, StackAksi& undoStack, ManajemenPenggun
             }
             break;
     }
+    pohonJabatan.bangunDariLinkedList(list, idCEO); 
 }
+
 
 void tampilkanMenuUtama(ManajemenPengguna& manajerPengguna) {
     std::cout << "\n===== MENU UTAMA - Aplikasi Pengelolaan Data Karyawan =====" << std::endl;
@@ -102,12 +108,13 @@ void tampilkanMenuUtama(ManajemenPengguna& manajerPengguna) {
         std::cout << "1. Manajemen Data Karyawan (Tambah, Update, Hapus)" << std::endl;
         std::cout << "2. Tampilkan & Urutkan Data Karyawan" << std::endl;
         std::cout << "3. Filter & Cari Data Karyawan" << std::endl;
-        std::cout << "4. Undo Aksi Terakhir (Karyawan)" << std::endl;
+        std::cout << "4. Visualisasi Hierarki Jabatan" << std::endl; 
+        std::cout << "5. Undo Aksi Terakhir (Karyawan)" << std::endl;
         if (currentUser->peran == TipePeran::ADMIN) {
-            std::cout << "5. Menu Admin" << std::endl;
-            std::cout << "6. Logout" << std::endl;
+            std::cout << "6. Menu Admin" << std::endl;
+            std::cout << "7. Logout" << std::endl;
         } else {
-            std::cout << "5. Logout" << std::endl;
+            std::cout << "6. Logout" << std::endl;
         }
     }
     std::cout << "0. Keluar Aplikasi" << std::endl;
@@ -147,9 +154,19 @@ void tampilkanSubMenuAdmin() {
     std::cout << "\n--- Sub Menu: Admin ---" << std::endl;
     std::cout << "1. Tampilkan Semua Pengguna (Debug)" << std::endl;
     std::cout << "2. Registrasi Pengguna Baru (Admin/User)" << std::endl;
-    std::cout << "3. Hapus Pengguna (User)" << std::endl; // <-- DITAMBAHKAN
+    std::cout << "3. Hapus Pengguna (User)" << std::endl;
     std::cout << "0. Kembali ke Menu Utama" << std::endl;
     std::cout << "-----------------------------------------------" << std::endl;
+}
+
+void tampilkanSubMenuHierarki() {
+    std::cout << "\n--- Sub Menu: Hierarki Jabatan ---" << std::endl;
+    std::cout << "1. Tampilkan Seluruh Hierarki" << std::endl;
+    std::cout << "2. Cari Bawahan Langsung" << std::endl;
+    std::cout << "3. Cari Semua Bawahan (Rekursif)" << std::endl;
+    std::cout << "4. Tampilkan Jalur ke Puncak Hierarki" << std::endl;
+    std::cout << "0. Kembali ke Menu Utama" << std::endl;
+    std::cout << "------------------------------------" << std::endl;
 }
 
 
@@ -157,13 +174,17 @@ int main() {
     ManajemenPengguna manajerPenggunaUtama(NAMA_FILE_PENGGUNA_UTAMA);
     LinkedListKaryawan daftarKaryawanUtama;
     StackAksi stackUndoUtama;
+    PohonJabatan pohonJabatanUtama; 
 
     std::cout << "\n===== Selamat Datang di Aplikasi Pengelolaan Data Karyawan =====" << std::endl;
     if (!daftarKaryawanUtama.muatDariFile(NAMA_FILE_KARYAWAN)) {
         std::cout << "Memulai dengan daftar karyawan kosong karena file '" << NAMA_FILE_KARYAWAN << "' tidak ditemukan atau gagal dimuat." << std::endl;
+    } else {
+         pohonJabatanUtama.bangunDariLinkedList(daftarKaryawanUtama, "CEO001"); 
     }
 
-    prosesMenuUtama(daftarKaryawanUtama, stackUndoUtama, manajerPenggunaUtama);
+
+    prosesMenuUtama(daftarKaryawanUtama, stackUndoUtama, manajerPenggunaUtama, pohonJabatanUtama);
 
     if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_KARYAWAN)) {
         std::cerr << "Peringatan: Gagal menyimpan data karyawan ke file!" << std::endl;
@@ -173,7 +194,7 @@ int main() {
     return 0;
 }
 
-void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna) {
+void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan) {
     int pilihanUtama = -1;
     std::string inputUsername, inputPassword;
 
@@ -184,9 +205,9 @@ void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
         if (!currentUser) {
             maxPilihan = 2;
         } else if (currentUser->peran == TipePeran::ADMIN) {
-            maxPilihan = 6;
+            maxPilihan = 7; 
         } else {
-            maxPilihan = 5;
+            maxPilihan = 6; 
         }
         pilihanUtama = getInputPilihan("Masukkan pilihan: ", 0, maxPilihan );
 
@@ -211,36 +232,33 @@ void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
                     std::cout << "Pilihan tidak valid." << std::endl;
             }
         } else {
-            if (currentUser->peran == TipePeran::ADMIN) {
-                 switch (pilihanUtama) {
-                    case 1: prosesMenuCRUD(daftarKaryawan, stackUndo, manajerPengguna); break;
-                    case 2: prosesMenuTampilkanDanUrutkan(daftarKaryawan); break;
-                    case 3: prosesMenuFilterDanCari(daftarKaryawan); break;
-                    case 4: prosesUndo(daftarKaryawan, stackUndo, manajerPengguna); break;
-                    case 5: prosesMenuAdmin(manajerPengguna); break;
-                    case 6: manajerPengguna.logoutPengguna(); break;
-                    case 0: std::cout << "Keluar dari aplikasi..." << std::endl; break;
-                    default: std::cout << "Pilihan tidak valid." << std::endl;
-                }
-            } else { 
-                 switch (pilihanUtama) {
-                    case 1: prosesMenuCRUD(daftarKaryawan, stackUndo, manajerPengguna); break;
-                    case 2: prosesMenuTampilkanDanUrutkan(daftarKaryawan); break;
-                    case 3: prosesMenuFilterDanCari(daftarKaryawan); break;
-                    case 4: prosesUndo(daftarKaryawan, stackUndo, manajerPengguna); break;
-                    case 5: manajerPengguna.logoutPengguna(); break;
-                    case 0: std::cout << "Keluar dari aplikasi..." << std::endl; break;
-                    default: std::cout << "Pilihan tidak valid." << std::endl;
-                }
+            int offsetAdminMenu = (currentUser->peran == TipePeran::ADMIN) ? 1 : 0;
+            switch (pilihanUtama) {
+                case 1: prosesMenuCRUD(daftarKaryawan, stackUndo, manajerPengguna, pohonJabatan); break;
+                case 2: prosesMenuTampilkanDanUrutkan(daftarKaryawan); break;
+                case 3: prosesMenuFilterDanCari(daftarKaryawan); break;
+                case 4: prosesMenuHierarki(pohonJabatan, daftarKaryawan); break;
+                case 5: prosesUndo(daftarKaryawan, stackUndo, manajerPengguna, pohonJabatan); break;
+                case 6: 
+                    if (currentUser->peran == TipePeran::ADMIN) prosesMenuAdmin(manajerPengguna);
+                    else manajerPengguna.logoutPengguna();
+                    break;
+                case 7: 
+                    if (currentUser->peran == TipePeran::ADMIN) manajerPengguna.logoutPengguna();
+                    else std::cout << "Pilihan tidak valid." << std::endl;
+                    break;
+                case 0: std::cout << "Keluar dari aplikasi..." << std::endl; break;
+                default: std::cout << "Pilihan tidak valid." << std::endl;
             }
         }
     } while (pilihanUtama != 0);
 }
 
-void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna) {
+void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan) {
     int pilihanCRUD = -1;
     Karyawan kOperasi;
     std::string idKaryawanOperasi;
+    std::string idCEO = "CEO001"; 
 
     do {
         tampilkanSubMenuCRUD();
@@ -257,7 +275,16 @@ void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, Ma
                 getInputString("Masukkan Nama Karyawan: ", kOperasi.namaKaryawan);
                 getInputString("Masukkan Jabatan: ", kOperasi.jabatan);
                 kOperasi.gaji = getInputGaji("Masukkan Gaji: ");
+                getInputString("Masukkan ID Atasan (kosongkan jika tidak ada/CEO): ", kOperasi.idAtasan);
+                if (kOperasi.idAtasan.empty() && kOperasi.jabatan != "CEO" && kOperasi.idKaryawan != idCEO) {
+                     std::cout << "Peringatan: ID Atasan kosong, pastikan ini adalah CEO atau karyawan level atas." << std::endl;
+                } else if (!kOperasi.idAtasan.empty() && daftarKaryawan.cariKaryawanById(kOperasi.idAtasan) == nullptr) {
+                    std::cout << "Error: ID Atasan '" << kOperasi.idAtasan << "' tidak ditemukan. Karyawan tidak ditambahkan." << std::endl;
+                    break;
+                }
+
                 daftarKaryawan.tambahDiAkhir(kOperasi, stackUndo);
+                pohonJabatan.bangunDariLinkedList(daftarKaryawan, idCEO); 
                 break;
             }
             case 2: {
@@ -269,7 +296,7 @@ void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, Ma
                     Karyawan kUpdate = dataLama;
                     std::string inputBuffer;
 
-                    std::cout << "Data saat ini: Nama=" << dataLama.namaKaryawan << ", Jabatan=" << dataLama.jabatan << ", Gaji=" << std::fixed << std::setprecision(2) << dataLama.gaji << std::endl;
+                    std::cout << "Data saat ini: Nama=" << dataLama.namaKaryawan << ", Jabatan=" << dataLama.jabatan << ", Gaji=" << std::fixed << std::setprecision(2) << dataLama.gaji << ", ID Atasan=" << (dataLama.idAtasan.empty() ? "-" : dataLama.idAtasan) << std::endl;
 
                     getInputString("Masukkan Nama Baru (kosongkan jika tidak diubah '" + dataLama.namaKaryawan + "'): ", inputBuffer);
                     if (!inputBuffer.empty()) kUpdate.namaKaryawan = inputBuffer;
@@ -284,14 +311,30 @@ void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, Ma
                     if (!line.empty()) {
                         try {
                             gajiInputDouble = std::stod(line);
-                            if (gajiInputDouble != -1) {
+                            if (gajiInputDouble >= 0) {
                                 kUpdate.gaji = gajiInputDouble;
                             }
                         } catch (const std::exception& e) {
-                            std::cout << "Input gaji tidak valid atau tidak diubah. Menggunakan gaji lama." << std::endl;
+                             std::cout << "Input gaji tidak valid atau tidak diubah." << std::endl;
                         }
                     }
+                    
+                    getInputString("Masukkan ID Atasan Baru (kosongkan jika tidak diubah, '-' untuk hapus ID Atasan): ", inputBuffer);
+                    if (inputBuffer == "-") {
+                        kUpdate.idAtasan = "";
+                    } else if (!inputBuffer.empty()) {
+                         if (inputBuffer == kUpdate.idKaryawan) {
+                            std::cout << "Error: Karyawan tidak bisa menjadi atasan dirinya sendiri." << std::endl;
+                         } else if (daftarKaryawan.cariKaryawanById(inputBuffer) == nullptr) {
+                            std::cout << "Error: ID Atasan baru '" << inputBuffer << "' tidak ditemukan. ID Atasan tidak diubah." << std::endl;
+                         } else {
+                            kUpdate.idAtasan = inputBuffer;
+                         }
+                    }
+
+
                     daftarKaryawan.updateKaryawanById(idKaryawanOperasi, kUpdate, stackUndo);
+                    pohonJabatan.bangunDariLinkedList(daftarKaryawan, idCEO); 
                 } else {
                     std::cout << "Karyawan dengan ID '" << idKaryawanOperasi << "' tidak ditemukan." << std::endl;
                 }
@@ -301,6 +344,7 @@ void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, Ma
                 std::cout << "--- Hapus Karyawan ---" << std::endl;
                 getInputString("Masukkan ID Karyawan yang akan dihapus: ", idKaryawanOperasi);
                 daftarKaryawan.hapusKaryawanById(idKaryawanOperasi, stackUndo);
+                pohonJabatan.bangunDariLinkedList(daftarKaryawan, idCEO); 
                 break;
             }
             case 0:
@@ -417,4 +461,72 @@ void prosesMenuAdmin(ManajemenPengguna& manajerPengguna) {
                 std::cout << "Pilihan Admin tidak valid." << std::endl;
         }
     } while (pilihanAdmin != 0);
+}
+
+void prosesMenuHierarki(PohonJabatan& pohonJabatan, const LinkedListKaryawan& daftarKaryawan) {
+    int pilihanHierarki = -1;
+    std::string idKaryawanInput;
+    std::string idCEO = "CEO001"; 
+    
+    pohonJabatan.bangunDariLinkedList(daftarKaryawan, idCEO);
+
+
+    do {
+        tampilkanSubMenuHierarki();
+        pilihanHierarki = getInputPilihan("Pilih Opsi Hierarki: ", 0, 4);
+        switch (pilihanHierarki) {
+            case 1:
+                pohonJabatan.tampilkanSeluruhHierarki();
+                break;
+            case 2:
+                getInputString("Masukkan ID Karyawan (Atasan): ", idKaryawanInput);
+                {
+                    std::vector<Karyawan> bawahan = pohonJabatan.cariBawahanLangsung(idKaryawanInput);
+                    if (bawahan.empty()) {
+                        std::cout << "Tidak ada bawahan langsung atau ID Atasan tidak ditemukan." << std::endl;
+                    } else {
+                        std::cout << "Bawahan Langsung dari ID " << idKaryawanInput << ":" << std::endl;
+                        for (const auto& k : bawahan) {
+                            std::cout << "- " << k.namaKaryawan << " (" << k.jabatan << " - ID: " << k.idKaryawan << ")" << std::endl;
+                        }
+                    }
+                }
+                break;
+            case 3:
+                getInputString("Masukkan ID Karyawan (Atasan): ", idKaryawanInput);
+                {
+                    std::vector<Karyawan> semuaBawahan = pohonJabatan.cariSemuaBawahan(idKaryawanInput);
+                     if (semuaBawahan.empty()) {
+                        std::cout << "Tidak ada bawahan (rekursif) atau ID Atasan tidak ditemukan." << std::endl;
+                    } else {
+                        std::cout << "Semua Bawahan (Rekursif) dari ID " << idKaryawanInput << ":" << std::endl;
+                        for (const auto& k : semuaBawahan) {
+                            std::cout << "- " << k.namaKaryawan << " (" << k.jabatan << " - ID: " << k.idKaryawan << ")" << std::endl;
+                        }
+                    }
+                }
+                break;
+            case 4:
+                getInputString("Masukkan ID Karyawan: ", idKaryawanInput);
+                {
+                    std::vector<Karyawan> jalur = pohonJabatan.getJalurKePuncak(idKaryawanInput);
+                    if (jalur.empty()) {
+                        std::cout << "Karyawan tidak ditemukan atau tidak ada jalur ke puncak." << std::endl;
+                    } else {
+                        std::cout << "Jalur dari " << idKaryawanInput << " ke Puncak Hierarki:" << std::endl;
+                        for (size_t i = 0; i < jalur.size(); ++i) {
+                            std::cout << jalur[i].namaKaryawan << (i < jalur.size() - 1 ? " -> " : "");
+                        }
+                        std::cout << std::endl;
+                    }
+                }
+                break;
+            case 0:
+                std::cout << "Kembali ke Menu Utama..." << std::endl;
+                break;
+            default:
+                std::cout << "Pilihan tidak valid." << std::endl;
+        }
+
+    } while (pilihanHierarki != 0);
 }

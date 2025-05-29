@@ -3,11 +3,11 @@
 #define LINKEDLIST_KARYAWAN_H
 
 #include "karyawan.h"
-#include "stack_aksi.h" 
+#include "stack_aksi.h"
 #include <iostream>
 #include <string>
 #include <vector>
-#include <set> // Ditambahkan untuk getDaftarJabatanUnik
+#include <set>
 
 struct NodeLL {
     Karyawan dataKaryawan;
@@ -22,7 +22,7 @@ private:
     int jumlahNode;
 
     void hapusSemuaNode();
-    static void tukarKaryawan(Karyawan& a, Karyawan& b); 
+    static void tukarKaryawan(Karyawan& a, Karyawan& b);
     void quickSortKaryawan(std::vector<Karyawan>& arr, int low, int high, bool berdasarkanNama, bool ascending);
     int partitionKaryawan(std::vector<Karyawan>& arr, int low, int high, bool berdasarkanNama, bool ascending);
 
@@ -34,6 +34,7 @@ public:
     int getJumlahNode() const;
     void tampilkanSemua() const;
     NodeLL* cariKaryawanById(const std::string& idKaryawan) const;
+    NodeLL* getHead() const { return head; } 
 
     void tambahDiAkhir(const Karyawan& k, StackAksi& undoStack);
     bool hapusKaryawanById(const std::string& idKaryawan, StackAksi& undoStack);
@@ -42,19 +43,18 @@ public:
     void tambahDiAkhir(const Karyawan& k);
     bool hapusKaryawanById(const std::string& idKaryawan);
     bool updateKaryawanById(const std::string& idKaryawan, const Karyawan& dataBaru);
-    
+
     void tampilkanDataTerurut(bool berdasarkanNama, bool ascending);
 
     bool simpanKeFile(const std::string& namaFile) const;
-    bool muatDariFile(const std::string& namaFile, StackAksi& undoStack);
     bool muatDariFile(const std::string& namaFile);
 
     void tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool lebihBesar) const;
-    void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const; // Hanya satu deklarasi
+    void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const;
     void cariKaryawanBerdasarkanNama(const std::string& nama) const;
     std::vector<std::string> getDaftarJabatanUnik() const;
 
-    
+
 };
 
 #endif // LINKEDLIST_KARYAWAN_H
