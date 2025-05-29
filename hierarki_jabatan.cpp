@@ -2,6 +2,8 @@
 #include "hierarki_jabatan.h"
 #include <iostream>
 #include <algorithm>
+#include <vector>
+#include <map>
 
 PohonJabatan::PohonJabatan() : root(nullptr) {}
 
@@ -10,53 +12,81 @@ PohonJabatan::~PohonJabatan() {
 }
 
 void PohonJabatan::bersihkanPohon() {
-    delete root;
-    root = nullptr;
+    for (auto const& [key, val] : petaNode) {
+        delete val;
+    }
     petaNode.clear();
+    root = nullptr;
 }
 
-void PohonJabatan::bangunDariLinkedList(const LinkedListKaryawan& daftarKaryawan, const std::string& idCEO) {
+void PohonJabatan::bangunDariLinkedList(const LinkedListKaryawan& daftarKaryawan, const std::string& idCEOInput) {
     bersihkanPohon();
     if (daftarKaryawan.isEmpty()) {
         std::cout << "Info: Daftar karyawan kosong, tidak dapat membangun hierarki." << std::endl;
         return;
     }
 
-    NodeLL* current = daftarKaryawan.getHead(); 
+    NodeLL* currentLLNode = daftarKaryawan.getHead();
     std::vector<Karyawan> semuaKaryawan;
-    while (current != nullptr) {
-        semuaKaryawan.push_back(current->dataKaryawan);
-        current = current->next;
+    while (currentLLNode != nullptr) {
+        semuaKaryawan.push_back(currentLLNode->dataKaryawan);
+        currentLLNode = currentLLNode->next;
+    }
+
+    if (semuaKaryawan.empty()) {
+        std::cout << "Info: Tidak ada data karyawan untuk membangun hierarki." << std::endl;
+        return;
     }
 
     for (const auto& k : semuaKaryawan) {
         petaNode[k.idKaryawan] = new NodeTreeJabatan(k);
     }
 
-    NodeLL* nodeCEO_LL = daftarKaryawan.cariKaryawanById(idCEO);
-    if (!nodeCEO_LL) {
-        std::cout << "Error: Karyawan dengan ID CEO '" << idCEO << "' tidak ditemukan." << std::endl;
-        if (!petaNode.empty()){
-             root = petaNode.begin()->second; 
-             std::cout << "Info: Menggunakan karyawan pertama dalam daftar sebagai root sementara." << std::endl;
+    if (petaNode.empty()) {
+        std::cout << "Error: Peta node kosong setelah inisialisasi." << std::endl;
+        return;
+    }
+    
+    std::vector<NodeTreeJabatan*> rootsPotensial;
+    NodeTreeJabatan* calonRootDariInput = nullptr;
+
+    if (!idCEOInput.empty() && petaNode.count(idCEOInput)) {
+        calonRootDariInput = petaNode[idCEOInput];
+    } else if (!idCEOInput.empty()) {
+        std::cout << "Peringatan: Karyawan dengan ID CEO input '" << idCEOInput << "' tidak ditemukan dalam petaNode." << std::endl;
+    }
+
+    for (const auto& pairNode : petaNode) {
+        NodeTreeJabatan* nodeSaatIni = pairNode.second;
+        const std::string& idAtasan = nodeSaatIni->dataKaryawan.idAtasan;
+
+        if (!idAtasan.empty() && petaNode.count(idAtasan)) {
+            if (nodeSaatIni->dataKaryawan.idKaryawan != idAtasan) {
+                petaNode[idAtasan]->anak.push_back(nodeSaatIni);
+            }
+        } else if (idAtasan.empty()) {
+            rootsPotensial.push_back(nodeSaatIni);
+        }
+    }
+
+    if (calonRootDariInput) {
+        root = calonRootDariInput;
+        std::cout << "Info: Menggunakan ID CEO input '" << root->dataKaryawan.idKaryawan << "' sebagai root." << std::endl;
+    } else if (!rootsPotensial.empty()) {
+        root = rootsPotensial[0]; 
+        if (rootsPotensial.size() > 1) {
+            std::cout << "Peringatan: Ditemukan " << rootsPotensial.size() << " karyawan tanpa ID Atasan. Menggunakan yang pertama ditemukan: '" << root->dataKaryawan.namaKaryawan << "' (ID: " << root->dataKaryawan.idKaryawan << ") sebagai root." << std::endl;
         } else {
-            std::cout << "Error: Tidak ada karyawan untuk dijadikan root." << std::endl;
-            return;
+            std::cout << "Info: Menggunakan karyawan '" << root->dataKaryawan.namaKaryawan << "' (ID: " << root->dataKaryawan.idKaryawan << ") sebagai root karena tidak ada ID Atasan." << std::endl;
         }
+    } else if (!petaNode.empty()) {
+        root = petaNode.begin()->second;
+        std::cout << "Peringatan: Tidak ada karyawan tanpa ID Atasan dan ID CEO input tidak valid/ditemukan. Menggunakan karyawan pertama dalam peta (ID: " << root->dataKaryawan.idKaryawan << ") sebagai root hierarki. Hasil mungkin tidak sesuai." << std::endl;
     } else {
-        root = petaNode[idCEO];
+        std::cout << "Error: Tidak dapat menentukan root untuk hierarki. Tidak ada karyawan." << std::endl;
+        return;
     }
 
-
-    for (const auto& k : semuaKaryawan) {
-        if (k.idKaryawan == idCEO) continue; 
-
-        if (!k.idAtasan.empty() && petaNode.count(k.idAtasan) && petaNode.count(k.idKaryawan)) {
-            petaNode[k.idAtasan]->anak.push_back(petaNode[k.idKaryawan]);
-        } else if (k.idAtasan.empty() && k.idKaryawan != idCEO) {
-             
-        }
-    }
     std::cout << "Info: Hierarki jabatan berhasil dibangun." << std::endl;
 }
 
@@ -84,8 +114,9 @@ void PohonJabatan::tampilkanSeluruhHierarki() const {
 
 std::vector<Karyawan> PohonJabatan::cariBawahanLangsung(const std::string& idAtasan) const {
     std::vector<Karyawan> hasil;
-    if (petaNode.count(idAtasan)) {
-        NodeTreeJabatan* nodeAtasan = petaNode.at(idAtasan);
+    auto it = petaNode.find(idAtasan);
+    if (it != petaNode.end()) {
+        NodeTreeJabatan* nodeAtasan = it->second;
         for (NodeTreeJabatan* anak : nodeAtasan->anak) {
             hasil.push_back(anak->dataKaryawan);
         }
@@ -105,8 +136,9 @@ void PohonJabatan::cariBawahanRecursive(NodeTreeJabatan* node, std::vector<Karya
 
 std::vector<Karyawan> PohonJabatan::cariSemuaBawahan(const std::string& idAtasan) const {
     std::vector<Karyawan> hasil;
-    if (petaNode.count(idAtasan)) {
-        NodeTreeJabatan* nodeAtasan = petaNode.at(idAtasan);
+    auto it = petaNode.find(idAtasan);
+    if (it != petaNode.end()) {
+        NodeTreeJabatan* nodeAtasan = it->second;
         cariBawahanRecursive(nodeAtasan, hasil);
     } else {
         std::cout << "Info: Karyawan dengan ID '" << idAtasan << "' tidak ditemukan dalam hierarki." << std::endl;
@@ -114,41 +146,44 @@ std::vector<Karyawan> PohonJabatan::cariSemuaBawahan(const std::string& idAtasan
     return hasil;
 }
 
-
 bool PohonJabatan::cariJalurKePuncakRecursive(NodeTreeJabatan* nodeSaatIni, const std::string& idKaryawanTarget, std::vector<Karyawan>& jalur) const {
-    if (!nodeSaatIni) return false;
-
-    jalur.push_back(nodeSaatIni->dataKaryawan);
-
+     if (!nodeSaatIni) {
+        return false;
+    }
     if (nodeSaatIni->dataKaryawan.idKaryawan == idKaryawanTarget) {
+        jalur.push_back(nodeSaatIni->dataKaryawan);
         return true;
     }
-
     for (NodeTreeJabatan* anak : nodeSaatIni->anak) {
         if (cariJalurKePuncakRecursive(anak, idKaryawanTarget, jalur)) {
+            jalur.push_back(nodeSaatIni->dataKaryawan);
             return true;
         }
     }
-
-    jalur.pop_back();
     return false;
 }
 
 std::vector<Karyawan> PohonJabatan::getJalurKePuncak(const std::string& idKaryawan) const {
     std::vector<Karyawan> jalur;
-    if (!root) return jalur;
+    if (!root) {
+        std::cout << "Info: Hierarki belum dibangun atau kosong." << std::endl;
+        return jalur;
+    }
+    auto it = petaNode.find(idKaryawan);
+    if (it == petaNode.end()){
+        std::cout << "Info: Karyawan dengan ID '" << idKaryawan << "' tidak ditemukan dalam peta node hierarki." << std::endl;
+        return jalur;
+    }
 
-    if (root->dataKaryawan.idKaryawan == idKaryawan) {
-        jalur.push_back(root->dataKaryawan);
-        return jalur;
-    }
-    
-    if (cariJalurKePuncakRecursive(root, idKaryawan, jalur)) {
+    if (!cariJalurKePuncakRecursive(root, idKaryawan, jalur)) {
+         jalur.clear();
+         std::cout << "Info: Tidak ditemukan jalur dari root ke karyawan dengan ID '" << idKaryawan << "'." << std::endl;
+    } else {
         std::reverse(jalur.begin(), jalur.end());
-        return jalur;
     }
-    
-    jalur.clear(); 
-    std::cout << "Info: Karyawan dengan ID '" << idKaryawan << "' tidak ditemukan dalam hierarki atau bukan bagian dari tree utama." << std::endl;
     return jalur;
+}
+
+bool PohonJabatan::petaNodeContainsKey(const std::string& key) const {
+    return petaNode.count(key) > 0;
 }

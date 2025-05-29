@@ -14,9 +14,7 @@ struct NodeTreeJabatan {
 
     NodeTreeJabatan(const Karyawan& k) : dataKaryawan(k) {}
     ~NodeTreeJabatan() {
-        for (NodeTreeJabatan* child : anak) {
-            delete child;
-        }
+        
     }
 };
 
@@ -34,12 +32,13 @@ public:
     PohonJabatan();
     ~PohonJabatan();
 
-    void bangunDariLinkedList(const LinkedListKaryawan& daftarKaryawan, const std::string& idCEO);
+    void bangunDariLinkedList(const LinkedListKaryawan& daftarKaryawan, const std::string& idCEOInput = "");
     void tampilkanSeluruhHierarki() const;
     std::vector<Karyawan> cariBawahanLangsung(const std::string& idAtasan) const;
     std::vector<Karyawan> cariSemuaBawahan(const std::string& idAtasan) const;
     std::vector<Karyawan> getJalurKePuncak(const std::string& idKaryawan) const;
     void bersihkanPohon();
+    bool petaNodeContainsKey(const std::string& key) const;
 };
 
 #endif // HIERARKI_JABATAN_H

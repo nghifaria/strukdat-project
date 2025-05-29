@@ -1,2 +1,3 @@
-CE001,naufal,CEO,1,
-002,ghifari,leader,1,CE001
+001,nghifari,ceo,1,
+002,naufal,leader,1,001
+003,afdhala,wakil leader,1,002
