@@ -1,4 +1,3 @@
-// manajemen_pengguna.h
 #ifndef MANAJEMEN_PENGGUNA_H
 #define MANAJEMEN_PENGGUNA_H
 
@@ -13,6 +12,10 @@ private:
     Pengguna* penggunaSaatIniInternal;
 
     static unsigned long hashPasswordSederhana(const std::string& password);
+    static std::string encryptCaesar(const std::string& text, int shift);
+    static std::string decryptCaesar(const std::string& text, int shift);
+    static const int CAESAR_SHIFT = 3; 
+
     Pengguna* cariPenggunaInternal(const std::string& username);
 
     void muatPenggunaDariFile();

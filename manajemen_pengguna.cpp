@@ -1,15 +1,14 @@
-// manajemen_pengguna.cpp
 #include "manajemen_pengguna.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <cctype>
 
 ManajemenPengguna::ManajemenPengguna(const std::string& namaFile) : namaFilePenggunaInternal(namaFile), penggunaSaatIniInternal(nullptr) {
     muatPenggunaDariFile();
     if (daftarPengguna.empty()) {
-        std::cout << "Info: Daftar pengguna kosong. Membuat akun admin default (admin/admin)..." << std::endl;
         registrasiPenggunaOlehAdmin("admin", "admin", TipePeran::ADMIN);
     }
 }
@@ -24,6 +23,23 @@ unsigned long ManajemenPengguna::hashPasswordSederhana(const std::string& passwo
         hash = ((hash << 5) + hash) + c;
     }
     return hash;
+}
+
+std::string ManajemenPengguna::encryptCaesar(const std::string& text, int shift) {
+    std::string result = "";
+    for (char c : text) {
+        if (std::isalpha(c)) {
+            char base = std::isupper(c) ? 'A' : 'a';
+            result += static_cast<char>((c - base + shift) % 26 + base);
+        } else {
+            result += c;
+        }
+    }
+    return result;
+}
+
+std::string ManajemenPengguna::decryptCaesar(const std::string& text, int shift) {
+    return encryptCaesar(text, 26 - shift); 
 }
 
 Pengguna* ManajemenPengguna::cariPenggunaInternal(const std::string& username) {
@@ -58,7 +74,6 @@ std::string ManajemenPengguna::tipePeranToString(TipePeran peran) const {
 void ManajemenPengguna::muatPenggunaDariFile() {
     std::ifstream file(namaFilePenggunaInternal);
     if (!file.is_open()) {
-        std::cout << "Info: File data pengguna '" << namaFilePenggunaInternal << "' tidak ditemukan. Akan dimulai dengan daftar pengguna kosong atau admin default." << std::endl;
         return;
     }
     daftarPengguna.clear();
@@ -70,6 +85,7 @@ void ManajemenPengguna::muatPenggunaDariFile() {
         std::string peranStr;
         unsigned long hashedPasswordVal;
         TipePeran peranVal = TipePeran::PENGGUNA;
+        std::string encryptedPasswordPlaceholder;
 
         if (std::getline(ss, username, ',') && std::getline(ss, hashedPasswordStr, ',') && std::getline(ss, peranStr)) {
             try {
@@ -88,9 +104,6 @@ void ManajemenPengguna::muatPenggunaDariFile() {
         }
     }
     file.close();
-    if (!daftarPengguna.empty()){
-        std::cout << "Info: Data pengguna berhasil dimuat dari '" << namaFilePenggunaInternal << "'." << std::endl;
-    }
 }
 
 void ManajemenPengguna::simpanSemuaPenggunaKeFile() const {
@@ -103,7 +116,6 @@ void ManajemenPengguna::simpanSemuaPenggunaKeFile() const {
         file << pengguna.username << "," << pengguna.hashedPassword << "," << tipePeranToString(pengguna.peran) << "\n";
     }
     file.close();
-    std::cout << "Info: Data pengguna berhasil disimpan ke '" << namaFilePenggunaInternal << "'." << std::endl;
 }
 
 bool ManajemenPengguna::registrasiPenggunaBaruStandar(const std::string& username, const std::string& password) {
@@ -115,8 +127,8 @@ bool ManajemenPengguna::registrasiPenggunaBaruStandar(const std::string& usernam
         std::cout << "Error: Username '" << username << "' sudah terdaftar." << std::endl;
         return false;
     }
-    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(password), TipePeran::PENGGUNA);
-    std::cout << "Info: Pengguna '" << username << "' dengan peran 'PENGGUNA' berhasil diregistrasi." << std::endl;
+    std::string encryptedPassword = encryptCaesar(password, CAESAR_SHIFT);
+    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(encryptedPassword), TipePeran::PENGGUNA);
     return true;
 }
 
@@ -129,8 +141,8 @@ bool ManajemenPengguna::registrasiPenggunaOlehAdmin(const std::string& username,
         std::cout << "Error: Username '" << username << "' sudah terdaftar." << std::endl;
         return false;
     }
-    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(password), peran);
-    std::cout << "Info: Pengguna '" << username << "' dengan peran '" << tipePeranToString(peran) << "' berhasil diregistrasi oleh admin." << std::endl;
+    std::string encryptedPassword = encryptCaesar(password, CAESAR_SHIFT);
+    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(encryptedPassword), peran);
     return true;
 }
 
@@ -142,7 +154,8 @@ bool ManajemenPengguna::loginPengguna(const std::string& username, const std::st
         penggunaSaatIniInternal = nullptr;
         return false;
     }
-    if (pengguna->hashedPassword == ManajemenPengguna::hashPasswordSederhana(password)) {
+    std::string encryptedInputPassword = encryptCaesar(password, CAESAR_SHIFT);
+    if (pengguna->hashedPassword == ManajemenPengguna::hashPasswordSederhana(encryptedInputPassword)) {
         std::cout << "Info: Login berhasil untuk pengguna '" << username << "' sebagai '" << tipePeranToString(pengguna->peran) << "'." << std::endl;
         penggunaSaatIniInternal = pengguna;
         return true;
