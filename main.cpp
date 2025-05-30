@@ -1,4 +1,3 @@
-// main.cpp
 #include <iostream>
 #include <string>
 #include <vector>
@@ -15,24 +14,27 @@
 #include "hierarki_jabatan.h"
 #include "permintaan.h"
 #include "queue_permintaan.h"
+#include "rekrutmen.h"
 
 
 const std::string NAMA_FILE_KARYAWAN = "karyawan_data.csv";
 const std::string NAMA_FILE_PENGGUNA_UTAMA = "pengguna_data.csv";
 const std::string ID_CEO_DEFAULT_APP = "";
 const std::string NAMA_FILE_ANTRIAN_PERMINTAAN = "permintaan_data.csv";
+const std::string NAMA_FILE_REKRUTMEN = "rekrutmen_data.csv";
 
 
 void tampilkanMenuUtama(ManajemenPengguna& manajerPengguna);
-void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan, QueuePermintaan& antrianPermintaan);
+void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan, QueuePermintaan& antrianPermintaan, QueueRekrutmen& antrianRekrutmen);
 void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan);
 void prosesMenuTampilkanDanUrutkan(LinkedListKaryawan& daftarKaryawan);
 void prosesMenuFilterDanCari(LinkedListKaryawan& daftarKaryawan);
 void prosesUndo(LinkedListKaryawan& list, StackAksi& undoStack, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan);
-void prosesMenuAdmin(ManajemenPengguna& manajerPengguna, QueuePermintaan& antrianPermintaan);
+void prosesMenuAdmin(ManajemenPengguna& manajerPengguna, QueuePermintaan& antrianPermintaan, QueueRekrutmen& antrianRekrutmen);
 void prosesMenuHierarki(PohonJabatan& pohonJabatan, const LinkedListKaryawan& daftarKaryawan);
 void prosesMenuPermintaanKaryawan(QueuePermintaan& antrianPermintaan, ManajemenPengguna& manajerPengguna, const LinkedListKaryawan& daftarKaryawan);
 void tambahKaryawanBaruDariRegistrasi(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, PohonJabatan& pohonJabatan, const std::string& idKaryawanBaru);
+void prosesMenuRekrutmen(QueueRekrutmen& antrianRekrutmen);
 
 
 void getInputString(const std::string& prompt, std::string& output) {
@@ -150,7 +152,8 @@ void tampilkanMenuUtama(ManajemenPengguna& manajerPengguna) {
         std::cout << "6. Undo Aksi Terakhir (Karyawan)" << std::endl;
         if (currentUser->peran == TipePeran::ADMIN) {
             std::cout << "7. Menu Admin (Termasuk Proses Permintaan)" << std::endl;
-            std::cout << "8. Logout" << std::endl;
+            std::cout << "8. Menu Rekrutmen" << std::endl;
+            std::cout << "9. Logout" << std::endl;
         } else {
             std::cout << "7. Logout" << std::endl;
         }
@@ -217,6 +220,16 @@ void tampilkanSubMenuPermintaanUser() {
     std::cout << "------------------------------------" << std::endl;
 }
 
+void tampilkanSubMenuRekrutmen() {
+    std::cout << "\n--- Sub Menu: Rekrutmen ---" << std::endl;
+    std::cout << "1. Tambah Permintaan Rekrutmen Baru" << std::endl;
+    std::cout << "2. Lihat Antrean Permintaan Rekrutmen Aktif" << std::endl;
+    std::cout << "3. Proses Permintaan Rekrutmen" << std::endl;
+    std::cout << "4. Lihat Semua Histori Rekrutmen" << std::endl;
+    std::cout << "0. Kembali ke Menu Utama" << std::endl;
+    std::cout << "-----------------------------" << std::endl;
+}
+
 
 int main() {
     ManajemenPengguna manajerPenggunaUtama(NAMA_FILE_PENGGUNA_UTAMA);
@@ -224,6 +237,7 @@ int main() {
     StackAksi stackUndoUtama;
     PohonJabatan pohonJabatanUtama;
     QueuePermintaan antrianPermintaanUtama(NAMA_FILE_ANTRIAN_PERMINTAAN);
+    QueueRekrutmen antrianRekrutmenUtama(NAMA_FILE_REKRUTMEN);
 
     std::cout << "\n===== Selamat Datang di Aplikasi Pengelolaan Data Karyawan =====" << std::endl;
     if (daftarKaryawanUtama.muatDariFile(NAMA_FILE_KARYAWAN)) {
@@ -233,18 +247,19 @@ int main() {
     }
 
 
-    prosesMenuUtama(daftarKaryawanUtama, stackUndoUtama, manajerPenggunaUtama, pohonJabatanUtama, antrianPermintaanUtama);
+    prosesMenuUtama(daftarKaryawanUtama, stackUndoUtama, manajerPenggunaUtama, pohonJabatanUtama, antrianPermintaanUtama, antrianRekrutmenUtama);
 
     if (!daftarKaryawanUtama.simpanKeFile(NAMA_FILE_KARYAWAN)) {
         std::cerr << "Peringatan: Gagal menyimpan data karyawan ke file!" << std::endl;
     }
     antrianPermintaanUtama.simpanSemuaKeFile();
+    antrianRekrutmenUtama.simpanSemuaKeFile();
     std::cout << "Aplikasi ditutup." << std::endl;
 
     return 0;
 }
 
-void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan, QueuePermintaan& antrianPermintaan) {
+void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, ManajemenPengguna& manajerPengguna, PohonJabatan& pohonJabatan, QueuePermintaan& antrianPermintaan, QueueRekrutmen& antrianRekrutmen) {
     int pilihanUtama = -1;
     std::string inputUsername, inputPassword;
 
@@ -255,7 +270,7 @@ void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
         if (!currentUser) {
             maxPilihan = 2;
         } else if (currentUser->peran == TipePeran::ADMIN) {
-            maxPilihan = 8;
+            maxPilihan = 9;
         } else {
             maxPilihan = 7;
         }
@@ -290,18 +305,19 @@ void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
                     case 2: prosesMenuTampilkanDanUrutkan(daftarKaryawan); break;
                     case 3: prosesMenuFilterDanCari(daftarKaryawan); break;
                     case 4: prosesMenuHierarki(pohonJabatan, daftarKaryawan); break;
-                    case 5: 
+                    case 5:
                         std::cout << "Admin tidak dapat mengajukan permintaan melalui menu ini. Gunakan Menu Admin untuk manajemen." << std::endl;
                         break;
                     case 6: prosesUndo(daftarKaryawan, stackUndo, manajerPengguna, pohonJabatan); break;
-                    case 7: prosesMenuAdmin(manajerPengguna, antrianPermintaan); break;
-                    case 8: manajerPengguna.logoutPengguna(); break;
+                    case 7: prosesMenuAdmin(manajerPengguna, antrianPermintaan, antrianRekrutmen); break;
+                    case 8: prosesMenuRekrutmen(antrianRekrutmen); break;
+                    case 9: manajerPengguna.logoutPengguna(); break;
                     case 0: std::cout << "Keluar dari aplikasi..." << std::endl; break;
                     default: std::cout << "Pilihan tidak valid." << std::endl;
                 }
-            } else { // Peran PENGGUNA
+            } else {
                  switch (pilihanUtama) {
-                    
+
                     case 2: prosesMenuTampilkanDanUrutkan(daftarKaryawan); break;
                     case 3: prosesMenuFilterDanCari(daftarKaryawan); break;
                     case 4: prosesMenuHierarki(pohonJabatan, daftarKaryawan); break;
@@ -311,7 +327,7 @@ void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
                     case 0: std::cout << "Keluar dari aplikasi..." << std::endl; break;
                     default: std::cout << "Pilihan tidak valid." << std::endl;
                 }
-                 if (pilihanUtama == 1) { 
+                 if (pilihanUtama == 1) {
                     std::cout << "Akses ditolak. Hanya Admin yang dapat mengelola data karyawan." << std::endl;
                 }
             }
@@ -497,7 +513,7 @@ void prosesMenuFilterDanCari(LinkedListKaryawan& daftarKaryawan) {
     } while (pilihanFilter != 0);
 }
 
-void prosesMenuAdmin(ManajemenPengguna& manajerPengguna, QueuePermintaan& antrianPermintaan) {
+void prosesMenuAdmin(ManajemenPengguna& manajerPengguna, QueuePermintaan& antrianPermintaan, QueueRekrutmen& antrianRekrutmen) {
     int pilihanAdmin = -1;
     std::string usernameBaru, passwordBaru, usernameTarget;
     int pilihanPeranInt;
@@ -533,21 +549,6 @@ void prosesMenuAdmin(ManajemenPengguna& manajerPengguna, QueuePermintaan& antria
                 {
                     std::cout << "--- Proses Antrian Permintaan Aktif ---" << std::endl;
                     antrianPermintaan.tampilkanSemuaPermintaan(true);
-                    NodeQueue* front = antrianPermintaan.getFrontNode();
-                    bool adaPermintaanAktifUntukDiproses = false;
-                    while(front != nullptr){
-                        if(front->dataPermintaan.status == StatusPermintaan::DIAJUKAN || front->dataPermintaan.status == StatusPermintaan::DIPROSES){
-                            adaPermintaanAktifUntukDiproses = true;
-                            break;
-                        }
-                        front = front->next;
-                    }
-
-                    if (!adaPermintaanAktifUntukDiproses) {
-                         std::cout << "Tidak ada permintaan aktif untuk diproses saat ini." << std::endl;
-                         break;
-                    }
-
                     std::string idPermintaanProses;
                     getInputString("Masukkan ID Permintaan yang akan diproses (atau kosongkan untuk batal): ", idPermintaanProses);
                     if (!idPermintaanProses.empty()) {
@@ -716,4 +717,67 @@ void prosesMenuPermintaanKaryawan(QueuePermintaan& antrianPermintaan, ManajemenP
                 std::cout << "Pilihan tidak valid." << std::endl;
         }
     } while (pilihanMenu != 0);
+}
+
+void prosesMenuRekrutmen(QueueRekrutmen& antrianRekrutmen) {
+    int pilihanRekrutmen = -1;
+    std::string namaPelamar, jabatanDilamar, idPermintaanProses;
+
+    do {
+        tampilkanSubMenuRekrutmen();
+        pilihanRekrutmen = getInputPilihan("Masukkan pilihan Rekrutmen: ", 0, 4);
+
+        switch (pilihanRekrutmen) {
+            case 1: {
+                std::cout << "--- Tambah Permintaan Rekrutmen Baru ---" << std::endl;
+                getInputString("Masukkan Nama Pelamar: ", namaPelamar);
+                getInputString("Masukkan Jabatan yang Dilamar: ", jabatanDilamar);
+                if (namaPelamar.empty() || jabatanDilamar.empty()) {
+                    std::cout << "Error: Nama pelamar dan jabatan yang dilamar tidak boleh kosong." << std::endl;
+                } else {
+                    PermintaanRekrutmen prBaru(namaPelamar, jabatanDilamar);
+                    antrianRekrutmen.enqueue(prBaru);
+                    std::cout << "Info: Permintaan rekrutmen (ID: " << prBaru.idPermintaan << ") telah diajukan." << std::endl;
+                }
+                break;
+            }
+            case 2: {
+                antrianRekrutmen.tampilkanSemuaPermintaan(true);
+                break;
+            }
+            case 3: {
+                std::cout << "--- Proses Permintaan Rekrutmen ---" << std::endl;
+                antrianRekrutmen.tampilkanSemuaPermintaan(true);
+                if (antrianRekrutmen.isEmpty()) {
+                    std::cout << "Tidak ada permintaan rekrutmen untuk diproses." << std::endl;
+                    break;
+                }
+                getInputString("Masukkan ID Permintaan Rekrutmen yang akan diproses: ", idPermintaanProses);
+                int pilihanStatus = getInputPilihan("Pilih status baru (1: Diproses, 2: Wawancara, 3: Lolos, 4: Ditolak): ", 1, 4);
+                StatusRekrutmen statusBaru;
+                switch (pilihanStatus) {
+                    case 1: statusBaru = StatusRekrutmen::DIPROSES; break;
+                    case 2: statusBaru = StatusRekrutmen::WAWANCARA; break;
+                    case 3: statusBaru = StatusRekrutmen::LOLOS; break;
+                    case 4: statusBaru = StatusRekrutmen::DITOLAK; break;
+                    default: std::cout << "Pilihan status tidak valid." << std::endl; continue;
+                }
+                if (antrianRekrutmen.updateStatusPermintaan(idPermintaanProses, statusBaru)) {
+                    std::cout << "Info: Status permintaan rekrutmen " << idPermintaanProses << " berhasil diupdate menjadi " << statusRekrutmenToString(statusBaru) << "." << std::endl;
+                } else {
+                    std::cout << "Error: Permintaan rekrutmen dengan ID " << idPermintaanProses << " tidak ditemukan." << std::endl;
+                }
+                break;
+            }
+            case 4: {
+                antrianRekrutmen.tampilkanSemuaPermintaan(false);
+                break;
+            }
+            case 0:
+                std::cout << "Kembali ke Menu Utama..." << std::endl;
+                break;
+            default:
+                std::cout << "Pilihan tidak valid." << std::endl;
+        }
+    } while (pilihanRekrutmen != 0);
 }
