@@ -21,20 +21,20 @@ private:
     void muatPenggunaDariFile();
     void simpanSemuaPenggunaKeFile() const;
     TipePeran stringToTipePeran(const std::string& strPeran) const;
-    std::string tipePeranToString(TipePeran peran) const;
-
 
 public:
     ManajemenPengguna(const std::string& namaFile = "pengguna_data.csv");
     ~ManajemenPengguna();
 
-    bool registrasiPenggunaBaruStandar(const std::string& username, const std::string& password); 
+    bool registrasiUserPublik(const std::string& username, const std::string& password);
     bool registrasiPenggunaOlehAdmin(const std::string& username, const std::string& password, TipePeran peran);
     bool loginPengguna(const std::string& username, const std::string& password);
     void logoutPengguna();
     Pengguna* getPenggunaSaatIni() const;
     bool hapusPengguna(const std::string& usernameAdmin, const std::string& usernameTarget);
     void tampilkanSemuaPenggunaDebug() const;
+    bool updateUserRole(const std::string& username, TipePeran peranBaru);
+    std::string tipePeranToString(TipePeran peran) const;
 };
 
-#endif // MANAJEMEN_PENGGUNA_H
+#endif

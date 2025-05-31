@@ -35,9 +35,10 @@ struct PermintaanRekrutmen {
     std::string jabatanYangDilamar;
     std::string tanggalPengajuan;
     StatusRekrutmen status;
+    std::string usernamePelamar;
 
-    PermintaanRekrutmen(std::string nama = "", std::string jabatan = "", std::string id = "")
-        : idPermintaan(id), namaPelamar(nama), jabatanYangDilamar(jabatan), status(StatusRekrutmen::DIAJUKAN) {
+    PermintaanRekrutmen(std::string nama = "", std::string jabatan = "", std::string uname = "", std::string id = "")
+        : idPermintaan(id), namaPelamar(nama), jabatanYangDilamar(jabatan), usernamePelamar(uname), status(StatusRekrutmen::DIAJUKAN) {
         auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now);
         std::stringstream ss_readable_ts;
@@ -76,6 +77,7 @@ public:
     void tampilkanSemuaPermintaan(bool hanyaAktif = false) const;
     void simpanSemuaKeFile() const;
     void muatDariFile();
+    NodeRekrutmen* getFrontNode() const { return frontNode; }
 };
 
-#endif // REKRUTMEN_H
+#endif

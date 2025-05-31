@@ -57,7 +57,10 @@ TipePeran ManajemenPengguna::stringToTipePeran(const std::string& strPeran) cons
     if (peranLower == "admin") {
         return TipePeran::ADMIN;
     }
-    return TipePeran::PENGGUNA;
+    if (peranLower == "pengguna" || peranLower == "karyawan") {
+        return TipePeran::PENGGUNA;
+    }
+    return TipePeran::USER;
 }
 
 std::string ManajemenPengguna::tipePeranToString(TipePeran peran) const {
@@ -65,9 +68,11 @@ std::string ManajemenPengguna::tipePeranToString(TipePeran peran) const {
         case TipePeran::ADMIN:
             return "ADMIN";
         case TipePeran::PENGGUNA:
-            return "PENGGUNA";
+            return "KARYAWAN";
+        case TipePeran::USER:
+            return "USER";
         default:
-            return "PENGGUNA";
+            return "USER";
     }
 }
 
@@ -84,23 +89,15 @@ void ManajemenPengguna::muatPenggunaDariFile() {
         std::string hashedPasswordStr;
         std::string peranStr;
         unsigned long hashedPasswordVal;
-        TipePeran peranVal = TipePeran::PENGGUNA;
-        std::string encryptedPasswordPlaceholder;
-
+        TipePeran peranVal = TipePeran::USER;
         if (std::getline(ss, username, ',') && std::getline(ss, hashedPasswordStr, ',') && std::getline(ss, peranStr)) {
             try {
                 hashedPasswordVal = std::stoul(hashedPasswordStr);
                 peranVal = stringToTipePeran(peranStr);
                 daftarPengguna.emplace_back(username, hashedPasswordVal, peranVal);
             } catch (const std::invalid_argument& ia) {
-                std::cerr << "Peringatan: Format data tidak valid di file pengguna untuk user: " << username << " Baris: " << baris << " Detail: " << ia.what() << std::endl;
             } catch (const std::out_of_range& oor) {
-                std::cerr << "Peringatan: Nilai hashed password di luar jangkauan untuk user: " << username << " Baris: " << baris << " Detail: " << oor.what() << std::endl;
             }
-        } else {
-             if (!baris.empty()) {
-                std::cerr << "Peringatan: Baris tidak lengkap atau format salah di file pengguna: " << baris << std::endl;
-             }
         }
     }
     file.close();
@@ -109,7 +106,6 @@ void ManajemenPengguna::muatPenggunaDariFile() {
 void ManajemenPengguna::simpanSemuaPenggunaKeFile() const {
     std::ofstream file(namaFilePenggunaInternal);
     if (!file.is_open()) {
-        std::cerr << "Error: Tidak dapat membuka file data pengguna '" << namaFilePenggunaInternal << "' untuk ditulis." << std::endl;
         return;
     }
     for (const auto& pengguna : daftarPengguna) {
@@ -118,7 +114,7 @@ void ManajemenPengguna::simpanSemuaPenggunaKeFile() const {
     file.close();
 }
 
-bool ManajemenPengguna::registrasiPenggunaBaruStandar(const std::string& username, const std::string& password) {
+bool ManajemenPengguna::registrasiUserPublik(const std::string& username, const std::string& password) {
     if (username.empty() || password.empty()) {
         std::cout << "Error: Username dan password tidak boleh kosong." << std::endl;
         return false;
@@ -128,7 +124,8 @@ bool ManajemenPengguna::registrasiPenggunaBaruStandar(const std::string& usernam
         return false;
     }
     std::string encryptedPassword = encryptCaesar(password, CAESAR_SHIFT);
-    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(encryptedPassword), TipePeran::PENGGUNA);
+    daftarPengguna.emplace_back(username, ManajemenPengguna::hashPasswordSederhana(encryptedPassword), TipePeran::USER);
+    simpanSemuaPenggunaKeFile();
     return true;
 }
 
@@ -146,21 +143,17 @@ bool ManajemenPengguna::registrasiPenggunaOlehAdmin(const std::string& username,
     return true;
 }
 
-
 bool ManajemenPengguna::loginPengguna(const std::string& username, const std::string& password) {
     Pengguna* pengguna = this->cariPenggunaInternal(username);
     if (pengguna == nullptr) {
-        std::cout << "Error: Username '" << username << "' tidak ditemukan." << std::endl;
         penggunaSaatIniInternal = nullptr;
         return false;
     }
     std::string encryptedInputPassword = encryptCaesar(password, CAESAR_SHIFT);
     if (pengguna->hashedPassword == ManajemenPengguna::hashPasswordSederhana(encryptedInputPassword)) {
-        std::cout << "Info: Login berhasil untuk pengguna '" << username << "' sebagai '" << tipePeranToString(pengguna->peran) << "'." << std::endl;
         penggunaSaatIniInternal = pengguna;
         return true;
     } else {
-        std::cout << "Error: Password salah untuk pengguna '" << username << "'." << std::endl;
         penggunaSaatIniInternal = nullptr;
         return false;
     }
@@ -168,10 +161,7 @@ bool ManajemenPengguna::loginPengguna(const std::string& username, const std::st
 
 void ManajemenPengguna::logoutPengguna() {
     if (penggunaSaatIniInternal != nullptr) {
-        std::cout << "Info: Pengguna '" << penggunaSaatIniInternal->username << "' berhasil logout." << std::endl;
         penggunaSaatIniInternal = nullptr;
-    } else {
-        std::cout << "Info: Tidak ada pengguna yang sedang login." << std::endl;
     }
 }
 
@@ -179,35 +169,36 @@ Pengguna* ManajemenPengguna::getPenggunaSaatIni() const {
     return penggunaSaatIniInternal;
 }
 
+bool ManajemenPengguna::updateUserRole(const std::string& username, TipePeran peranBaru) {
+    Pengguna* pengguna = cariPenggunaInternal(username);
+    if (pengguna == nullptr) {
+        return false;
+    }
+    pengguna->peran = peranBaru;
+    simpanSemuaPenggunaKeFile();
+    return true;
+}
+
 bool ManajemenPengguna::hapusPengguna(const std::string& usernameAdmin, const std::string& usernameTarget) {
     Pengguna* admin = cariPenggunaInternal(usernameAdmin);
     if (!admin || admin->peran != TipePeran::ADMIN) {
-        std::cout << "Error: Hanya admin yang dapat menghapus pengguna." << std::endl;
         return false;
     }
-
     if (usernameAdmin == usernameTarget) {
-        std::cout << "Error: Admin tidak dapat menghapus dirinya sendiri." << std::endl;
         return false;
     }
-
     Pengguna* target = cariPenggunaInternal(usernameTarget);
     if (!target) {
-        std::cout << "Error: Pengguna target '" << usernameTarget << "' tidak ditemukan." << std::endl;
         return false;
     }
-
     if (target->peran == TipePeran::ADMIN) {
-        std::cout << "Error: Admin tidak dapat menghapus admin lain." << std::endl;
         return false;
     }
-
     daftarPengguna.erase(
         std::remove_if(daftarPengguna.begin(), daftarPengguna.end(),
                        [&](const Pengguna& p) { return p.username == usernameTarget; }),
         daftarPengguna.end());
-
-    std::cout << "Info: Pengguna '" << usernameTarget << "' berhasil dihapus oleh admin '" << usernameAdmin << "'." << std::endl;
+    simpanSemuaPenggunaKeFile();
     return true;
 }
 

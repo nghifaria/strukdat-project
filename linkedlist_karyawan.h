@@ -1,4 +1,3 @@
-// linkedlist_karyawan.h
 #ifndef LINKEDLIST_KARYAWAN_H
 #define LINKEDLIST_KARYAWAN_H
 
@@ -20,11 +19,13 @@ private:
     NodeLL* head;
     NodeLL* tail;
     int jumlahNode;
+    int idKaryawanCounter;
 
     void hapusSemuaNode();
     static void tukarKaryawan(Karyawan& a, Karyawan& b);
     void quickSortKaryawan(std::vector<Karyawan>& arr, int low, int high, bool berdasarkanNama, bool ascending);
     int partitionKaryawan(std::vector<Karyawan>& arr, int low, int high, bool berdasarkanNama, bool ascending);
+    std::string generateNewIdKaryawan();
 
 public:
     LinkedListKaryawan();
@@ -48,13 +49,12 @@ public:
 
     bool simpanKeFile(const std::string& namaFile) const;
     bool muatDariFile(const std::string& namaFile);
+    std::string getNextId();
 
     void tampilkanKaryawanBerdasarkanGaji(double batasGaji, bool lebihBesar) const;
     void tampilkanKaryawanBerdasarkanJabatan(const std::string& jabatan) const;
     void cariKaryawanBerdasarkanNama(const std::string& nama) const;
     std::vector<std::string> getDaftarJabatanUnik() const;
-
-
 };
 
-#endif // LINKEDLIST_KARYAWAN_H
+#endif

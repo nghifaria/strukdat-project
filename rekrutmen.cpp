@@ -100,25 +100,27 @@ void QueueRekrutmen::tampilkanSemuaPermintaan(bool hanyaAktif) const {
         return;
     }
     std::cout << std::left << std::setw(10) << "ID Req"
+              << std::setw(15) << "Username"
               << std::setw(20) << "Nama Pelamar"
               << std::setw(25) << "Jabatan Dilamar"
               << std::setw(20) << "Tanggal Pengajuan"
               << std::setw(15) << "Status" << std::endl;
-    std::cout << "------------------------------------------------------------------------------------------------------" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------------------------------------------" << std::endl;
     NodeRekrutmen* current = frontNode;
     bool adaDataTampil = false;
     while (current != nullptr) {
+        bool tampil = false;
         if (hanyaAktif) {
             if (current->dataPermintaan.status == StatusRekrutmen::DIAJUKAN || current->dataPermintaan.status == StatusRekrutmen::DIPROSES || current->dataPermintaan.status == StatusRekrutmen::WAWANCARA) {
-                std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaan
-                          << std::setw(20) << current->dataPermintaan.namaPelamar
-                          << std::setw(25) << current->dataPermintaan.jabatanYangDilamar
-                          << std::setw(20) << current->dataPermintaan.tanggalPengajuan
-                          << std::setw(15) << statusRekrutmenToString(current->dataPermintaan.status) << std::endl;
-                adaDataTampil = true;
+                tampil = true;
             }
         } else {
+            tampil = true;
+        }
+
+        if (tampil) {
             std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaan
+                      << std::setw(15) << current->dataPermintaan.usernamePelamar
                       << std::setw(20) << current->dataPermintaan.namaPelamar
                       << std::setw(25) << current->dataPermintaan.jabatanYangDilamar
                       << std::setw(20) << current->dataPermintaan.tanggalPengajuan
@@ -127,18 +129,15 @@ void QueueRekrutmen::tampilkanSemuaPermintaan(bool hanyaAktif) const {
         }
         current = current->next;
     }
-    if (!adaDataTampil && hanyaAktif) {
-        std::cout << "Tidak ada permintaan rekrutmen aktif saat ini." << std::endl;
-    } else if (!adaDataTampil && !hanyaAktif) {
-        std::cout << "Tidak ada riwayat permintaan rekrutmen." << std::endl;
+    if (!adaDataTampil) {
+        std::cout << "Tidak ada data untuk ditampilkan." << std::endl;
     }
-    std::cout << "------------------------------------------------------------------------------------------------------" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------------------------------------------" << std::endl;
 }
 
 void QueueRekrutmen::simpanSemuaKeFile() const {
     std::ofstream file(namaFileRekrutmen);
     if (!file.is_open()) {
-        std::cerr << "Error: Tidak dapat membuka file '" << namaFileRekrutmen << "' untuk menyimpan permintaan rekrutmen." << std::endl;
         return;
     }
     NodeRekrutmen* current = frontNode;
@@ -147,7 +146,8 @@ void QueueRekrutmen::simpanSemuaKeFile() const {
              << current->dataPermintaan.namaPelamar << ","
              << current->dataPermintaan.jabatanYangDilamar << ","
              << current->dataPermintaan.tanggalPengajuan << ","
-             << statusRekrutmenToString(current->dataPermintaan.status) << "\n";
+             << statusRekrutmenToString(current->dataPermintaan.status) << ","
+             << current->dataPermintaan.usernamePelamar << "\n";
         current = current->next;
     }
     file.close();
@@ -181,7 +181,8 @@ void QueueRekrutmen::muatDariFile() {
             std::getline(ss, p.namaPelamar, ',') &&
             std::getline(ss, p.jabatanYangDilamar, ',') &&
             std::getline(ss, p.tanggalPengajuan, ',') &&
-            std::getline(ss, statusStr)
+            std::getline(ss, statusStr, ',') &&
+            std::getline(ss, p.usernamePelamar)
         ) {
             p.status = stringToStatusRekrutmen(statusStr);
             enqueue(p);

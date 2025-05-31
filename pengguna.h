@@ -1,4 +1,3 @@
-// pengguna.h
 #ifndef PENGGUNA_H
 #define PENGGUNA_H
 
@@ -6,7 +5,8 @@
 
 enum class TipePeran {
     PENGGUNA,
-    ADMIN
+    ADMIN,
+    USER
 };
 
 struct Pengguna {
@@ -14,9 +14,9 @@ struct Pengguna {
     unsigned long hashedPassword;
     TipePeran peran;
 
-    Pengguna() : hashedPassword(0), peran(TipePeran::PENGGUNA) {}
+    Pengguna() : hashedPassword(0), peran(TipePeran::USER) {}
     Pengguna(std::string uname, unsigned long hPass, TipePeran prn)
         : username(uname), hashedPassword(hPass), peran(prn) {}
 };
 
-#endif // PENGGUNA_H
+#endif
