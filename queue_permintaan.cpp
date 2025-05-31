@@ -1,5 +1,7 @@
-// queue_permintaan.cpp
 #include "queue_permintaan.h"
+#include <stdexcept>
+#include <vector>
+#include <algorithm>
 
 std::string QueuePermintaan::generateNewIdPermintaan() {
     std::stringstream ss;
@@ -83,7 +85,7 @@ void QueuePermintaan::tampilkanSemuaPermintaan(bool hanyaAktif) const {
     } else {
         std::cout << "\n--- Daftar Semua Permintaan Dalam Antrian (Histori) ---" << std::endl;
     }
-    
+
     if (isEmpty()) {
         std::cout << "Tidak ada permintaan dalam antrian." << std::endl;
         return;
@@ -91,11 +93,9 @@ void QueuePermintaan::tampilkanSemuaPermintaan(bool hanyaAktif) const {
     std::cout << std::left << std::setw(10) << "ID Req"
               << std::setw(15) << "ID Karyawan"
               << std::setw(20) << "Tipe Permintaan"
-              << std::setw(30) << "Detail"
               << std::setw(20) << "Timestamp"
-              << std::setw(15) << "Status"
-              << std::setw(30) << "Catatan Admin" << std::endl;
-    std::cout << "--------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
+              << std::setw(15) << "Status" << std::endl;
+    std::cout << "-----------------------------------------------------------------------------" << std::endl;
     NodeQueue* current = frontNode;
     bool adaDataTampil = false;
     while (current != nullptr) {
@@ -104,20 +104,16 @@ void QueuePermintaan::tampilkanSemuaPermintaan(bool hanyaAktif) const {
                  std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaanInternal
                           << std::setw(15) << current->dataPermintaan.idKaryawanPengaju
                           << std::setw(20) << current->dataPermintaan.tipePermintaan
-                          << std::setw(30) << current->dataPermintaan.detailPermintaan
                           << std::setw(20) << current->dataPermintaan.timestampPengajuan
-                          << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status)
-                          << std::setw(30) << current->dataPermintaan.catatanAdmin << std::endl;
+                          << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status) << std::endl;
                 adaDataTampil = true;
             }
         } else {
             std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaanInternal
                       << std::setw(15) << current->dataPermintaan.idKaryawanPengaju
                       << std::setw(20) << current->dataPermintaan.tipePermintaan
-                      << std::setw(30) << current->dataPermintaan.detailPermintaan
                       << std::setw(20) << current->dataPermintaan.timestampPengajuan
-                      << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status)
-                      << std::setw(30) << current->dataPermintaan.catatanAdmin << std::endl;
+                      << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status) << std::endl;
             adaDataTampil = true;
         }
         current = current->next;
@@ -127,7 +123,7 @@ void QueuePermintaan::tampilkanSemuaPermintaan(bool hanyaAktif) const {
     } else if (!adaDataTampil && !hanyaAktif) {
         std::cout << "Tidak ada riwayat permintaan." << std::endl;
     }
-    std::cout << "--------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------------------------------------" << std::endl;
 }
 
 bool QueuePermintaan::updateStatusPermintaan(const std::string& idPermintaan, StatusPermintaan statusBaru, const std::string& catatanAdmin = "") {
@@ -137,8 +133,6 @@ bool QueuePermintaan::updateStatusPermintaan(const std::string& idPermintaan, St
             current->dataPermintaan.status = statusBaru;
             current->dataPermintaan.catatanAdmin = catatanAdmin;
             std::cout << "Info: Status permintaan " << idPermintaan << " berhasil diupdate menjadi " << statusPermintaanToString(statusBaru) << "." << std::endl;
-            if (statusBaru == StatusPermintaan::DISETUJUI || statusBaru == StatusPermintaan::DITOLAK) {
-            }
             return true;
         }
         current = current->next;
@@ -158,12 +152,12 @@ bool QueuePermintaan::prosesPermintaanSelesai(const std::string& idPermintaan) {
         current = current->next;
     }
 
-    if (current == nullptr) return false; 
+    if (current == nullptr) return false;
 
     if (current->dataPermintaan.status != StatusPermintaan::DISETUJUI && current->dataPermintaan.status != StatusPermintaan::DITOLAK) {
-        return false; 
+        return false;
     }
-    
+
     if (current == frontNode) {
         frontNode = frontNode->next;
         if (frontNode == nullptr) rearNode = nullptr;
@@ -200,7 +194,6 @@ void QueuePermintaan::simpanSemuaKeFile() const {
 void QueuePermintaan::muatDariFile() {
     std::ifstream file(namaFilePermintaan);
     if (!file.is_open()) {
-        std::cout << "Info: File permintaan '" << namaFilePermintaan << "' tidak ditemukan. Memulai dengan antrian kosong." << std::endl;
         idPermintaanCounter = 1;
         return;
     }
@@ -212,7 +205,7 @@ void QueuePermintaan::muatDariFile() {
     }
     rearNode = nullptr;
     count = 0;
-    idPermintaanCounter = 1; 
+    idPermintaanCounter = 1;
 
     std::string baris;
     int maxIdFromFile = 0;
@@ -250,25 +243,22 @@ void QueuePermintaan::muatDariFile() {
             }
         } else {
             if(!baris.empty()){
-                std::cerr << "Peringatan: Baris tidak valid di file permintaan: " << baris << std::endl;
             }
         }
     }
     file.close();
 
     for(const auto& p_const : tempPermintaanList){
-        Permintaan p_non_const = p_const; 
-        enqueue(p_non_const); 
+        Permintaan p_non_const = p_const;
+        enqueue(p_non_const);
     }
-    
+
     if (!isEmpty()) {
        idPermintaanCounter = maxIdFromFile + 1;
     } else {
        idPermintaanCounter = 1;
     }
 
-
     if (count > 0) {
-        std::cout << "Info: " << count << " permintaan berhasil dimuat dari '" << namaFilePermintaan << "'." << std::endl;
     }
 }

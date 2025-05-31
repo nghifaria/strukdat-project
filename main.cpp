@@ -386,13 +386,12 @@ void prosesManajemenPermintaan(QueuePermintaan& antrianPermintaan) {
                 std::cout << "Tidak ada permintaan aktif untuk diproses." << std::endl;
                 continue;
             }
-            std::string id, catatan;
+            std::string id;
             int statusPilihan;
             getInputString("ID Permintaan untuk diproses: ", id);
             statusPilihan = getInputPilihan("Status baru (1:Diproses, 2:Disetujui, 3:Ditolak):", 1, 3);
-            getInputString("Catatan admin (opsional): ", catatan);
             StatusPermintaan status = (statusPilihan == 1) ? StatusPermintaan::DIPROSES : (statusPilihan == 2) ? StatusPermintaan::DISETUJUI : StatusPermintaan::DITOLAK;
-            antrianPermintaan.updateStatusPermintaan(id, status, catatan);
+            antrianPermintaan.updateStatusPermintaan(id, status, "");
         }
         else if (pilihan == 3) antrianPermintaan.tampilkanSemuaPermintaan(false);
 
@@ -612,7 +611,7 @@ void prosesMenuPermintaanKaryawan(QueuePermintaan& antrianPermintaan, ManajemenP
         if (pilihan == 1) {
             std::string tipe, detail;
             getInputString("Tipe permintaan: ", tipe);
-            getInputString("Detail permintaan: ", detail);
+            getInputString("Detail permintaan (jika ada, jika tidak kosongkan): ", detail);
             Permintaan pBaru(idKaryawan, tipe, detail);
             antrianPermintaan.enqueue(pBaru);
             std::cout << "Permintaan (ID: " << pBaru.idPermintaanInternal << ") diajukan." << std::endl;
@@ -623,16 +622,14 @@ void prosesMenuPermintaanKaryawan(QueuePermintaan& antrianPermintaan, ManajemenP
             if (antrianPermintaan.isEmpty() || current == nullptr){
                 std::cout << "Tidak ada permintaan ditemukan." << std::endl;
             } else {
-                std::cout << std::left << std::setw(10) << "ID Req" << std::setw(20) << "Tipe" << std::setw(30) << "Detail" <<  std::setw(20) << "Timestamp" << std::setw(15) << "Status" << std::setw(30) << "Catatan Admin" << std::endl;
-                std::cout << "-----------------------------------------------------------------------------------------------------------------------" << std::endl;
+                std::cout << std::left << std::setw(10) << "ID Req" << std::setw(20) << "Tipe" <<  std::setw(20) << "Timestamp" << std::setw(15) << "Status" << std::endl;
+                std::cout << "--------------------------------------------------------------------" << std::endl;
                 while (current != nullptr) {
                     if (current->dataPermintaan.idKaryawanPengaju == idKaryawan) {
                         std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaanInternal
                                   << std::setw(20) << current->dataPermintaan.tipePermintaan
-                                  << std::setw(30) << current->dataPermintaan.detailPermintaan
                                   << std::setw(20) << current->dataPermintaan.timestampPengajuan
-                                  << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status)
-                                  << std::setw(30) << current->dataPermintaan.catatanAdmin << std::endl;
+                                  << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status) << std::endl;
                         found = true;
                     }
                     current = current->next;
