@@ -109,7 +109,7 @@ void prosesMenuUtama(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
             } else if (peran == TipePeran::USER) {
                 prosesMenuUser(antrianRekrutmen, manajerPengguna);
             }
-            pilihan = (manajerPengguna.getPenggunaSaatIni() == nullptr) ? -1 : 0; 
+            pilihan = (manajerPengguna.getPenggunaSaatIni() == nullptr) ? -1 : 0;
         }
 
     } while (pilihan != 0);
@@ -147,6 +147,7 @@ void prosesMenuAdmin(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, M
                     else if(aksi.tipe == TipeAksi::HAPUS) daftarKaryawan.tambahDiAkhir(aksi.dataKaryawanUtama);
                     else if(aksi.tipe == TipeAksi::UPDATE && aksi.dataKaryawanSebelum.has_value()) daftarKaryawan.updateKaryawanById(aksi.dataKaryawanUtama.idKaryawan, aksi.dataKaryawanSebelum.value());
                     pohonJabatan.bangunDariLinkedList(daftarKaryawan, ID_CEO_DEFAULT_APP);
+                    std::cout << "Aksi terakhir berhasil di-undo." << std::endl;
                 }
                 break;
             case 0: manajerPengguna.logoutPengguna(); break;
@@ -207,22 +208,24 @@ void prosesMenuUser(QueueRekrutmen& antrianRekrutmen, ManajemenPengguna& manajer
                 std::cout << "\n--- Histori Lamaran untuk " << currentUser->username << " ---" << std::endl;
                 NodeRekrutmen* current = antrianRekrutmen.getFrontNode();
                 bool found = false;
-                while(current != nullptr) {
-                    if (current->dataPermintaan.usernamePelamar == currentUser->username) {
-                        if (!found) {
-                            std::cout << std::left << std::setw(10) << "ID Req" << std::setw(25) << "Jabatan" << std::setw(20) << "Tanggal" << std::setw(15) << "Status" << std::endl;
-                            std::cout << "-----------------------------------------------------------------" << std::endl;
+                if (antrianRekrutmen.isEmpty() || current == nullptr) {
+                     std::cout << "Anda belum pernah mengajukan lamaran." << std::endl;
+                } else {
+                    std::cout << std::left << std::setw(10) << "ID Req" << std::setw(25) << "Jabatan" << std::setw(20) << "Tanggal" << std::setw(15) << "Status" << std::endl;
+                    std::cout << "-----------------------------------------------------------------" << std::endl;
+                    while(current != nullptr) {
+                        if (current->dataPermintaan.usernamePelamar == currentUser->username) {
+                            std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaan
+                                      << std::setw(25) << current->dataPermintaan.jabatanYangDilamar
+                                      << std::setw(20) << current->dataPermintaan.tanggalPengajuan
+                                      << std::setw(15) << statusRekrutmenToString(current->dataPermintaan.status) << std::endl;
+                            found = true;
                         }
-                        std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaan
-                                  << std::setw(25) << current->dataPermintaan.jabatanYangDilamar
-                                  << std::setw(20) << current->dataPermintaan.tanggalPengajuan
-                                  << std::setw(15) << statusRekrutmenToString(current->dataPermintaan.status) << std::endl;
-                        found = true;
+                        current = current->next;
                     }
-                    current = current->next;
-                }
-                if (!found) {
-                    std::cout << "Anda belum pernah mengajukan lamaran." << std::endl;
+                    if (!found) {
+                        std::cout << "Anda belum pernah mengajukan lamaran." << std::endl;
+                    }
                 }
                 break;
             }
@@ -242,29 +245,38 @@ void prosesManajemenRekrutmen(QueueRekrutmen& antrianRekrutmen, ManajemenPenggun
         std::cout << "3. Lihat Semua Histori Rekrutmen" << std::endl;
         std::cout << "0. Kembali" << std::endl;
         pilihan = getInputPilihan("Pilihan: ", 0, 3);
-        
+
         switch (pilihan) {
             case 1:
                 antrianRekrutmen.tampilkanSemuaPermintaan(true);
                 break;
             case 2: {
                 antrianRekrutmen.tampilkanSemuaPermintaan(true);
-                if (antrianRekrutmen.isEmpty()) break;
+                if (antrianRekrutmen.isEmpty()){
+                     std::cout << "Tidak ada permintaan rekrutmen aktif untuk diproses." << std::endl;
+                     break;
+                }
                 std::string idProses;
                 getInputString("Masukkan ID Permintaan yang akan diproses: ", idProses);
-                
+
                 std::string usernamePelamar;
-                NodeRekrutmen* current = antrianRekrutmen.getFrontNode();
-                while(current != nullptr){
-                    if(current->dataPermintaan.idPermintaan == idProses) {
-                        usernamePelamar = current->dataPermintaan.usernamePelamar;
+                std::string namaPelamarPilihan;
+                std::string jabatanDilamarPilihan;
+                NodeRekrutmen* currentRek = antrianRekrutmen.getFrontNode();
+                bool idDitemukan = false;
+                while(currentRek != nullptr){
+                    if(currentRek->dataPermintaan.idPermintaan == idProses) {
+                        usernamePelamar = currentRek->dataPermintaan.usernamePelamar;
+                        namaPelamarPilihan = currentRek->dataPermintaan.namaPelamar;
+                        jabatanDilamarPilihan = currentRek->dataPermintaan.jabatanYangDilamar;
+                        idDitemukan = true;
                         break;
                     }
-                    current = current->next;
+                    currentRek = currentRek->next;
                 }
 
-                if(usernamePelamar.empty()){
-                    std::cout << "Error: ID Permintaan tidak ditemukan atau tidak valid." << std::endl;
+                if(!idDitemukan){
+                    std::cout << "Error: ID Permintaan '"<< idProses << "' tidak ditemukan atau tidak valid." << std::endl;
                     break;
                 }
 
@@ -280,23 +292,25 @@ void prosesManajemenRekrutmen(QueueRekrutmen& antrianRekrutmen, ManajemenPenggun
                     std::cout << "Status permintaan " << idProses << " berhasil diupdate." << std::endl;
                     if (statusBaru == StatusRekrutmen::LOLOS) {
                         std::cout << "\n--- PROSES PENERIMAAN KARYAWAN BARU ---" << std::endl;
-                        
+
                         std::string newKaryawanId = daftarKaryawan.getNextId();
                         std::cout << "ID Karyawan baru yang akan dibuat: " << newKaryawanId << std::endl;
 
                         Karyawan kBaru;
                         kBaru.idKaryawan = newKaryawanId;
-                        getInputString("Masukkan Nama Lengkap Karyawan: ", kBaru.namaKaryawan);
-                        getInputString("Masukkan Jabatan: ", kBaru.jabatan);
+                        kBaru.namaKaryawan = namaPelamarPilihan;
+                        std::cout << "Nama Lengkap Karyawan: " << kBaru.namaKaryawan << std::endl;
+                        kBaru.jabatan = jabatanDilamarPilihan;
+                        std::cout << "Jabatan: " << kBaru.jabatan << std::endl;
                         kBaru.gaji = getInputGaji("Masukkan Gaji (Juta): ");
                         getInputString("Masukkan ID Atasan (kosongkan jika tidak ada): ", kBaru.idAtasan);
-                        
+
                         std::string passwordBaru;
-                        getInputString("Masukkan password untuk akun karyawan baru: ", passwordBaru);
+                        getInputString("Masukkan password untuk akun karyawan baru '" + newKaryawanId + "': ", passwordBaru);
 
                         if(manajerPengguna.registrasiPenggunaOlehAdmin(kBaru.idKaryawan, passwordBaru, TipePeran::PENGGUNA)){
                             std::cout << "Akun karyawan baru dengan username '" << kBaru.idKaryawan << "' berhasil dibuat." << std::endl;
-                            
+
                             daftarKaryawan.tambahDiAkhir(kBaru, stackUndo);
                             pohonJabatan.bangunDariLinkedList(daftarKaryawan, ID_CEO_DEFAULT_APP);
                             std::cout << "Data karyawan baru berhasil ditambahkan." << std::endl;
@@ -304,14 +318,14 @@ void prosesManajemenRekrutmen(QueueRekrutmen& antrianRekrutmen, ManajemenPenggun
                             if(manajerPengguna.hapusPengguna(manajerPengguna.getPenggunaSaatIni()->username, usernamePelamar)){
                                 std::cout << "Akun pelamar lama '" << usernamePelamar << "' telah dihapus." << std::endl;
                             } else {
-                                std::cout << "Peringatan: Gagal menghapus akun pelamar lama." << std::endl;
+                                std::cout << "Peringatan: Gagal menghapus akun pelamar lama '" << usernamePelamar << "'." << std::endl;
                             }
                         } else {
                             std::cout << "Error: Gagal membuat akun login untuk karyawan baru." << std::endl;
                         }
                     }
                 } else {
-                    std::cout << "ID Permintaan tidak ditemukan." << std::endl;
+                    std::cout << "ID Permintaan tidak ditemukan saat mencoba update." << std::endl;
                 }
                 break;
             }
@@ -338,7 +352,7 @@ void prosesManajemenUser(ManajemenPengguna& manajerPengguna) {
             int peranPilihan;
             getInputString("Username baru: ", username);
             getInputString("Password baru: ", password);
-            peranPilihan = getInputPilihan("Peran (1:Admin, 2:Karyawan, 3:User): ", 1, 3);
+            peranPilihan = getInputPilihan("Peran (1:Admin, 2:Karyawan, 3:User Biasa): ", 1, 3);
             TipePeran peranBaru = (peranPilihan == 1) ? TipePeran::ADMIN : (peranPilihan == 2) ? TipePeran::PENGGUNA : TipePeran::USER;
             if (manajerPengguna.registrasiPenggunaOlehAdmin(username, password, peranBaru)) {
                  std::cout << "Pengguna baru berhasil diregistrasi." << std::endl;
@@ -349,7 +363,7 @@ void prosesManajemenUser(ManajemenPengguna& manajerPengguna) {
             if(manajerPengguna.hapusPengguna(manajerPengguna.getPenggunaSaatIni()->username, username)){
                 std::cout << "Pengguna berhasil dihapus." << std::endl;
             } else {
-                 std::cout << "Gagal menghapus pengguna." << std::endl;
+                 std::cout << "Gagal menghapus pengguna. Pastikan Anda tidak menghapus diri sendiri atau admin lain." << std::endl;
             }
         }
     } while (pilihan != 0);
@@ -368,7 +382,10 @@ void prosesManajemenPermintaan(QueuePermintaan& antrianPermintaan) {
         if(pilihan == 1) antrianPermintaan.tampilkanSemuaPermintaan(true);
         else if (pilihan == 2){
             antrianPermintaan.tampilkanSemuaPermintaan(true);
-            if(antrianPermintaan.isEmpty()) continue;
+            if(antrianPermintaan.isEmpty()){
+                std::cout << "Tidak ada permintaan aktif untuk diproses." << std::endl;
+                continue;
+            }
             std::string id, catatan;
             int statusPilihan;
             getInputString("ID Permintaan untuk diproses: ", id);
@@ -401,47 +418,76 @@ void prosesMenuCRUD(LinkedListKaryawan& daftarKaryawan, StackAksi& stackUndo, Po
                 std::string idBaru = daftarKaryawan.getNextId();
                 kOperasi.idKaryawan = idBaru;
                 std::cout << "ID Karyawan baru akan dibuat: " << idBaru << std::endl;
-                
+
                 getInputString("Masukkan Nama Karyawan: ", kOperasi.namaKaryawan);
                 getInputString("Masukkan Jabatan: ", kOperasi.jabatan);
                 kOperasi.gaji = getInputGaji("Masukkan Gaji (Juta): ");
                 getInputString("Masukkan ID Atasan (kosongkan jika tidak ada): ", kOperasi.idAtasan);
-                
+
                 std::string pass;
                 std::cout << "Pembuatan karyawan dari menu CRUD juga akan membuat akun login." << std::endl;
-                getInputString("Masukkan Password untuk akun karyawan baru: ", pass);
+                getInputString("Masukkan Password untuk akun karyawan baru '" + idBaru + "': " , pass);
 
                 ManajemenPengguna tempMgr(NAMA_FILE_PENGGUNA_UTAMA);
                 if(tempMgr.registrasiPenggunaOlehAdmin(kOperasi.idKaryawan, pass, TipePeran::PENGGUNA)){
+                    std::cout << "Akun karyawan dengan username '" << kOperasi.idKaryawan << "' berhasil dibuat." << std::endl;
                     daftarKaryawan.tambahDiAkhir(kOperasi, stackUndo);
                     pohonJabatan.bangunDariLinkedList(daftarKaryawan, ID_CEO_DEFAULT_APP);
+                    std::cout << "Data karyawan baru berhasil ditambahkan." << std::endl;
                 } else {
                     std::cout << "Gagal membuat akun login, data karyawan tidak ditambahkan." << std::endl;
                 }
                 break;
             }
             case 2: {
+                daftarKaryawan.tampilkanSemua();
+                if (daftarKaryawan.isEmpty()) break;
                 getInputString("Masukkan ID Karyawan yang akan diupdate: ", idKaryawanOperasi);
                 NodeLL* nodeAda = daftarKaryawan.cariKaryawanById(idKaryawanOperasi);
                 if (nodeAda != nullptr) {
                     Karyawan kUpdate = nodeAda->dataKaryawan;
+                    Karyawan kOriginal = kUpdate;
                     std::string buffer;
+
+                    std::cout << "Nama saat ini: " << kUpdate.namaKaryawan << std::endl;
                     getInputString("Nama Baru (kosongkan jika tidak diubah): ", buffer); if(!buffer.empty()) kUpdate.namaKaryawan = buffer;
+
+                    std::cout << "Jabatan saat ini: " << kUpdate.jabatan << std::endl;
                     getInputString("Jabatan Baru (kosongkan jika tidak diubah): ", buffer); if(!buffer.empty()) kUpdate.jabatan = buffer;
-                    kUpdate.gaji = getInputGaji("Gaji Baru (Juta): ");
-                    getInputString("ID Atasan Baru (kosongkan jika tidak diubah): ", buffer); if(!buffer.empty()) kUpdate.idAtasan = buffer;
-                    daftarKaryawan.updateKaryawanById(idKaryawanOperasi, kUpdate, stackUndo);
-                    pohonJabatan.bangunDariLinkedList(daftarKaryawan, ID_CEO_DEFAULT_APP);
+
+                    std::cout << "Gaji saat ini: " << kUpdate.gaji << std::endl;
+                    std::string gajiInputStr;
+                    getInputString("Gaji Baru (Juta) (kosongkan jika tidak diubah): ", gajiInputStr);
+                    if (!gajiInputStr.empty()) {
+                        try { kUpdate.gaji = std::stod(gajiInputStr); }
+                        catch (const std::exception& e) { std::cout << "Input gaji tidak valid, gaji tidak diubah." << std::endl; kUpdate.gaji = kOriginal.gaji; }
+                    }
+
+                    std::cout << "ID Atasan saat ini: " << (kUpdate.idAtasan.empty() ? "-" : kUpdate.idAtasan) << std::endl;
+                    getInputString("ID Atasan Baru (kosongkan jika tidak diubah, ketik 'hapus' untuk mengosongkan): ", buffer);
+                    if (buffer == "hapus") kUpdate.idAtasan = "";
+                    else if (!buffer.empty()) kUpdate.idAtasan = buffer;
+
+                    if (daftarKaryawan.updateKaryawanById(idKaryawanOperasi, kUpdate, stackUndo)){
+                        pohonJabatan.bangunDariLinkedList(daftarKaryawan, ID_CEO_DEFAULT_APP);
+                        std::cout << "Data karyawan berhasil diupdate." << std::endl;
+                    } else {
+                         std::cout << "Gagal mengupdate data karyawan." << std::endl;
+                    }
                 } else {
-                    std::cout << "Karyawan tidak ditemukan." << std::endl;
+                    std::cout << "Karyawan dengan ID '" << idKaryawanOperasi << "' tidak ditemukan." << std::endl;
                 }
                 break;
             }
             case 3: {
+                daftarKaryawan.tampilkanSemua();
+                if (daftarKaryawan.isEmpty()) break;
                 getInputString("Masukkan ID Karyawan yang akan dihapus: ", idKaryawanOperasi);
                 if (daftarKaryawan.hapusKaryawanById(idKaryawanOperasi, stackUndo)){
                     pohonJabatan.bangunDariLinkedList(daftarKaryawan, ID_CEO_DEFAULT_APP);
-                    std::cout << "Data karyawan berhasil dihapus. Akun login terkait harus dihapus manual melalui Manajemen Pengguna." << std::endl;
+                    std::cout << "Data karyawan berhasil dihapus. Akun login terkait (" << idKaryawanOperasi << ") harus dihapus manual melalui Manajemen Pengguna jika ada." << std::endl;
+                } else {
+                    std::cout << "Gagal menghapus karyawan. ID tidak ditemukan." << std::endl;
                 }
                 break;
             }
@@ -482,12 +528,20 @@ void prosesMenuFilterDanCari(LinkedListKaryawan& daftarKaryawan) {
             int opsi = getInputPilihan("Filter (1: >=, 0: <): ", 0, 1);
             daftarKaryawan.tampilkanKaryawanBerdasarkanGaji(batas, opsi == 1);
         } else if (pilihan == 2) {
-            std::string jabatan;
-            getInputString("Masukkan jabatan: ", jabatan);
-            daftarKaryawan.tampilkanKaryawanBerdasarkanJabatan(jabatan);
+            std::vector<std::string> daftarJabatan = daftarKaryawan.getDaftarJabatanUnik();
+            if(daftarJabatan.empty()){
+                std::cout << "Belum ada data jabatan." << std::endl;
+                continue;
+            }
+            std::cout << "Daftar Jabatan Tersedia:" << std::endl;
+            for(size_t i=0; i < daftarJabatan.size(); ++i){
+                std::cout << i+1 << ". " << daftarJabatan[i] << std::endl;
+            }
+            int pilihanJabatan = getInputPilihan("Pilih nomor jabatan untuk difilter: ", 1, daftarJabatan.size());
+            daftarKaryawan.tampilkanKaryawanBerdasarkanJabatan(daftarJabatan[pilihanJabatan-1]);
         } else if (pilihan == 3) {
             std::string nama;
-            getInputString("Masukkan nama: ", nama);
+            getInputString("Masukkan nama/bagian nama yang dicari: ", nama);
             daftarKaryawan.cariKaryawanBerdasarkanNama(nama);
         }
     } while (pilihan != 0);
@@ -504,10 +558,42 @@ void prosesMenuHierarki(PohonJabatan& pohonJabatan, const LinkedListKaryawan& da
         std::cout << "0. Kembali" << std::endl;
         pilihan = getInputPilihan("Pilihan: ", 0, 3);
         std::string id;
-        if (pilihan > 1 && pilihan < 4) getInputString("Masukkan ID Atasan: ", id);
-        if (pilihan == 1) pohonJabatan.tampilkanSeluruhHierarki();
-        else if (pilihan == 2) pohonJabatan.cariBawahanLangsung(id);
-        else if (pilihan == 3) pohonJabatan.cariSemuaBawahan(id);
+
+        if (pilihan == 1) {
+            pohonJabatan.tampilkanSeluruhHierarki();
+        } else if (pilihan == 2) {
+            getInputString("Masukkan ID Atasan: ", id);
+            std::vector<Karyawan> bawahanLangsung = pohonJabatan.cariBawahanLangsung(id);
+            if (pohonJabatan.petaNodeContainsKey(id) && bawahanLangsung.empty()) {
+                 std::cout << "Karyawan dengan ID '" << id << "' tidak memiliki bawahan langsung." << std::endl;
+            } else if (!bawahanLangsung.empty()) {
+                std::cout << "\n--- Bawahan Langsung dari " << id << " ---" << std::endl;
+                std::cout << std::left << std::setw(10) << "ID" << std::setw(25) << "Nama" << std::setw(20) << "Jabatan" << std::endl;
+                std::cout << "--------------------------------------------------" << std::endl;
+                for (const auto& k : bawahanLangsung) {
+                    std::cout << std::left << std::setw(10) << k.idKaryawan
+                              << std::setw(25) << k.namaKaryawan
+                              << std::setw(20) << k.jabatan << std::endl;
+                }
+                 std::cout << "--------------------------------------------------" << std::endl;
+            }
+        } else if (pilihan == 3) {
+            getInputString("Masukkan ID Atasan: ", id);
+            std::vector<Karyawan> semuaBawahan = pohonJabatan.cariSemuaBawahan(id);
+             if (pohonJabatan.petaNodeContainsKey(id) && semuaBawahan.empty()) {
+                 std::cout << "Karyawan dengan ID '" << id << "' tidak memiliki bawahan dalam struktur." << std::endl;
+            } else if (!semuaBawahan.empty()) {
+                std::cout << "\n--- Semua Bawahan dari " << id << " (Rekursif) ---" << std::endl;
+                std::cout << std::left << std::setw(10) << "ID" << std::setw(25) << "Nama" << std::setw(20) << "Jabatan" << std::endl;
+                std::cout << "--------------------------------------------------" << std::endl;
+                for (const auto& k : semuaBawahan) {
+                     std::cout << std::left << std::setw(10) << k.idKaryawan
+                              << std::setw(25) << k.namaKaryawan
+                              << std::setw(20) << k.jabatan << std::endl;
+                }
+                std::cout << "--------------------------------------------------" << std::endl;
+            }
+        }
     } while (pilihan != 0);
 }
 
@@ -534,20 +620,25 @@ void prosesMenuPermintaanKaryawan(QueuePermintaan& antrianPermintaan, ManajemenP
             std::cout << "\n--- Status Permintaan untuk " << idKaryawan << " ---" << std::endl;
             NodeQueue* current = antrianPermintaan.getFrontNode();
             bool found = false;
-            while (current != nullptr) {
-                if (current->dataPermintaan.idKaryawanPengaju == idKaryawan) {
-                    if(!found) {
-                        std::cout << std::left << std::setw(10) << "ID Req" << std::setw(20) << "Tipe" << std::setw(15) << "Status" << std::endl;
-                        std::cout << "------------------------------------------" << std::endl;
+            if (antrianPermintaan.isEmpty() || current == nullptr){
+                std::cout << "Tidak ada permintaan ditemukan." << std::endl;
+            } else {
+                std::cout << std::left << std::setw(10) << "ID Req" << std::setw(20) << "Tipe" << std::setw(30) << "Detail" <<  std::setw(20) << "Timestamp" << std::setw(15) << "Status" << std::setw(30) << "Catatan Admin" << std::endl;
+                std::cout << "-----------------------------------------------------------------------------------------------------------------------" << std::endl;
+                while (current != nullptr) {
+                    if (current->dataPermintaan.idKaryawanPengaju == idKaryawan) {
+                        std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaanInternal
+                                  << std::setw(20) << current->dataPermintaan.tipePermintaan
+                                  << std::setw(30) << current->dataPermintaan.detailPermintaan
+                                  << std::setw(20) << current->dataPermintaan.timestampPengajuan
+                                  << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status)
+                                  << std::setw(30) << current->dataPermintaan.catatanAdmin << std::endl;
+                        found = true;
                     }
-                    std::cout << std::left << std::setw(10) << current->dataPermintaan.idPermintaanInternal
-                              << std::setw(20) << current->dataPermintaan.tipePermintaan
-                              << std::setw(15) << statusPermintaanToString(current->dataPermintaan.status) << std::endl;
-                    found = true;
+                    current = current->next;
                 }
-                current = current->next;
+                if(!found) std::cout << "Tidak ada permintaan ditemukan untuk Anda." << std::endl;
             }
-            if(!found) std::cout << "Tidak ada permintaan ditemukan." << std::endl;
         }
     } while (pilihan != 0);
 }
@@ -559,30 +650,30 @@ void getInputString(const std::string& prompt, std::string& output) {
 
 double getInputGaji(const std::string& prompt) {
     double gaji;
+    std::string input;
     while (true) {
         std::cout << prompt;
-        if (std::cin >> gaji && gaji >= 0) {
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::getline(std::cin, input);
+        std::stringstream ss(input);
+        if (ss >> gaji && gaji >= 0 && (ss.eof() || ss.peek() == EOF) ) {
             return gaji;
         } else {
-            std::cout << "Input tidak valid." << std::endl;
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Input tidak valid. Masukkan angka non-negatif." << std::endl;
         }
     }
 }
 
 int getInputPilihan(const std::string& prompt, int minPilihan, int maxPilihan) {
     int pilihan;
+    std::string input;
     while (true) {
         std::cout << prompt;
-        if (std::cin >> pilihan && pilihan >= minPilihan && pilihan <= maxPilihan) {
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::getline(std::cin, input);
+        std::stringstream ss(input);
+        if (ss >> pilihan && pilihan >= minPilihan && pilihan <= maxPilihan && (ss.eof() || ss.peek() == EOF) ) {
             return pilihan;
         } else {
-            std::cout << "Input tidak valid." << std::endl;
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Input tidak valid. Masukkan angka antara " << minPilihan << " dan " << maxPilihan << "." << std::endl;
         }
     }
 }

@@ -42,3 +42,4 @@ public:
 };
 
 #endif // HIERARKI_JABATAN_H
+

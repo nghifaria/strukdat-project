@@ -416,3 +416,4 @@ std::vector<std::string> LinkedListKaryawan::getDaftarJabatanUnik() const {
     std::vector<std::string> vecJabatan(setJabatan.begin(), setJabatan.end());
     return vecJabatan;
 }
+

@@ -15,3 +15,5 @@ struct Karyawan {
 };
 
 #endif // KARYAWAN_H
+
+
