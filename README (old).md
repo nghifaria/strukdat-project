@@ -2,7 +2,7 @@ g++ main.cpp linkedlist_karyawan.cpp stack_aksi.cpp manajemen_pengguna.cpp hiera
 
 # Aplikasi Pengelolaan Data Karyawan
 
-Aplikasi konsol C++ ini dirancang sebagai proyek akhir untuk mata kuliah Struktur Data (KOM120H) di IPB University. Proyek ini mendemonstrasikan implementasi dan pemanfaatan berbagai struktur data dan algoritma fundamental dalam skenario pengelolaan data karyawan yang realistis.
+Aplikasi konsol C++ ini dirancang sebagai proyek akhir untuk mata kuliah Struktur Data (KOM120H) IPB University. Proyek ini mendemonstrasikan implementasi dan pemanfaatan berbagai struktur data dan algoritma fundamental dalam skenario pengelolaan data karyawan yang realistis.
 
 ## Fitur Utama
 
@@ -48,7 +48,6 @@ Aplikasi ini dilengkapi dengan serangkaian fitur komprehensif untuk manajemen da
 
 ## Struktur Data & Algoritma yang Diimplementasikan (Mandiri)
 
-Proyek ini secara khusus menekankan implementasi mandiri dari struktur data dan algoritma berikut, sesuai dengan pedoman proyek (50% mandiri, 50% STL):
 
 * **Linked List:** Digunakan sebagai penyimpanan utama data karyawan.
 * **Stack:** Diimplementasikan untuk fitur `Undo` aksi data karyawan.
