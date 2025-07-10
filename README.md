@@ -2,7 +2,7 @@
 
 ## Deskripsi Proyek
 
-Aplikasi konsol C++ ini dirancang sebagai Proyek Akhir untuk mata kuliah **Struktur Data (KOM120H)** di Institut Pertanian Bogor (IPB). Proyek ini mendemonstrasikan implementasi dan pemanfaatan berbagai struktur data serta algoritma fundamental dalam skenario sistem manajemen sumber daya manusia yang realistis, yang ditujukan untuk membantu Usaha Mikro, Kecil, dan Menengah (UMKM) dalam mengelola data karyawan secara efisien.
+Aplikasi konsol C++ ini dirancang sebagai Proyek Akhir untuk mata kuliah Struktur Data. Proyek ini mendemonstrasikan implementasi dan pemanfaatan berbagai struktur data serta algoritma fundamental dalam skenario sistem manajemen sumber daya manusia yang realistis, yang ditujukan untuk membantu Usaha Mikro, Kecil, dan Menengah (UMKM) dalam mengelola data karyawan secara efisien.
 ## Fitur Utama
 
 - **Manajemen Pengguna Berbasis Peran:**
